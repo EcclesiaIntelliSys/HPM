@@ -1,0 +1,12 @@
+{
+  "name": "my-music-app",
+  "private": true,
+  "scripts": {
+    "install-all": "npm --prefix server install && npm --prefix client install",
+    "dev": "concurrently \"npm --prefix server run start\" \"npm --prefix client run start\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.0.0"
+  }
+}
+
