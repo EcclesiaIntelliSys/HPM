@@ -28,7 +28,7 @@ export default function App() {
     );
   }
 
-  //   HHHHHHHWrapper for PaymentMock so it can navigate back to home
+  //   Wrapper for PaymentMock so it can navigate back to home
   function PaymentWrapper() {
     const navigate = useNavigate();
      return (
