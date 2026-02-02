@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "hpm",
       script: "./server/server.js",
-      env: {
+      env_production: {
         NODE_ENV: "production",
         PORT: 5000,
         MONGO_URI: "mongodb+srv://admin:admin@cluster0.uwzkubf.mongodb.net/?dbname=HPS_DEV", 
