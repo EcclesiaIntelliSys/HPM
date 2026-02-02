@@ -38,7 +38,6 @@ export default function App() {
       />
     );
   }
-
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-sand-100 text-olive-900">
