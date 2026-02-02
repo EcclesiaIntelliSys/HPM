@@ -27,6 +27,7 @@ app.use('/api/payments', paymentRoutes);
 
 // ✅ Serve React build in production
 if (process.env.NODE_ENV === 'production') {
+  console.log('XXXXXXXXXX');
   app.use(express.static(path.join(__dirname, '../client/build')));
 
   // Catch-all route for React Router
