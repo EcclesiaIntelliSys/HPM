@@ -1,19 +1,37 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-
+const path = require('path');
 
 require('dotenv').config();
+
 const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
 const paymentRoutes = require('./routes/payments');
 
 const app = express();
-app.use(cors()); app.use(express.json());
+app.use(cors());
+app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI).then(()=>console.log('Mongo connected'));
+// Connect to MongoDB Atlas
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Mongo connected'))
+  .catch(err => console.error(err));
 
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/payments', paymentRoutes);
-app.listen(process.env.PORT||5000, ()=>console.log('Server running'));
+
+// ✅ Serve React build in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/build')));
+
+  // Catch-all route for React Router
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+  });
+}
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
