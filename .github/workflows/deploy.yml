@@ -35,5 +35,5 @@ jobs:
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
             cd /home/ubuntu/app &&
             npm install --production &&
-            pm2 restart myapp || pm2 start server.js --name myapp
+            pm2 startOrReload ecosystem.config.js
           "
