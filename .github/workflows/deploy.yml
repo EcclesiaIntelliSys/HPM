@@ -36,6 +36,4 @@ jobs:
           cd /home/ubuntu/app/server && npm install --production &&
           cd /home/ubuntu/app/client && npm install && npm run build &&
           pm2 startOrReload /home/ubuntu/app/ecosystem.config.js --env production &&
-          pm2 save
-        "
-
+          pm2 save "
