@@ -33,7 +33,8 @@ jobs:
       - name: Install dependencies & restart app
         run: |
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
-          cd /home/ubuntu/app/server && npm install --production &&
-          cd /home/ubuntu/app/client && npm install && npm run build &&
-          pm2 startOrReload /home/ubuntu/app/ecosystem.config.js --env production &&
-          pm2 save "
+            cd /home/ubuntu/app/server && npm install --production &&
+            cd /home/ubuntu/app/client && npm install && npm run build &&
+            pm2 startOrReload /home/ubuntu/app/ecosystem.config.js --env production &&
+            pm2 save
+          "
