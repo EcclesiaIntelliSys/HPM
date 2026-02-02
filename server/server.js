@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 
-require('dotenv').config();
+if (process.env.NODE_ENV === 'production') {
+  require('dotenv').config();
+}
 
 const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
