@@ -38,8 +38,7 @@ if (process.env.NODE_ENV === 'production') {
 
   // Catch-all route for React Router
   app.get('*', (req, res) => {
-    // res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
-      res.json({ status: 'hoooooy' });
+     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 
   });
 }
