@@ -21,6 +21,7 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Mongo connected'))
   .catch(err => console.error(err));
 
+  
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
