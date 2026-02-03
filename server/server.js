@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 
+
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
@@ -32,7 +33,9 @@ if (process.env.NODE_ENV === 'production') {
 
   // Catch-all route for React Router
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+    // res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+      res.json({ status: 'hoooooy' });
+
   });
 }
 
