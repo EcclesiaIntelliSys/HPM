@@ -31,6 +31,11 @@ if (process.env.NODE_ENV === 'production') {
   console.log('XXXXXXXXXX');
   app.use(express.static(path.join(__dirname, '../client/build')));
 
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok' });
+  });
+
+
   // Catch-all route for React Router
   app.get('*', (req, res) => {
     // res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
@@ -40,9 +45,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
 
 
 const PORT = process.env.PORT || 5000;
