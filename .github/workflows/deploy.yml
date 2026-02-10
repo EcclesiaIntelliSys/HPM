@@ -13,12 +13,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install client dependencies & build
+        run: |
+          cd client
+          npm ci
+          npm run build
+
       - name: Setup SSH key
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2-key.pem
           chmod 400 ec2-key.pem
 
-      - name: Deploy to EC2 with rsync
+      - name: Clear old client build on EC2
+        run: |
+          ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
+            rm -rf /home/ubuntu/app/client/build
+          "
+
+      - name: Rsync server + client build to EC2
         run: |
           rsync -avz --delete \
             --exclude 'node_modules' \
@@ -28,13 +45,15 @@ jobs:
             --exclude '.vscode' \
             --exclude 'coverage' \
             -e "ssh -i ec2-key.pem -o StrictHostKeyChecking=no" \
-            ./ ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app
+            ./server ./ecosystem.config.js ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app
+          rsync -avz --delete \
+            -e "ssh -i ec2-key.pem -o StrictHostKeyChecking=no" \
+            ./client/build ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/client
 
-      - name: Install dependencies & restart app
+      - name: Install server dependencies & restart app
         run: |
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
-            cd /home/ubuntu/app/server && npm install --production &&
-            cd /home/ubuntu/app/client && npm install && npm run build &&
+            cd /home/ubuntu/app/server && npm ci --production &&
             pm2 startOrReload /home/ubuntu/app/ecosystem.config.js --env production &&
             pm2 save
           "
