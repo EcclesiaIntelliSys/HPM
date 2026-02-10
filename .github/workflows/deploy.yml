@@ -29,6 +29,13 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > ec2-key.pem
           chmod 400 ec2-key.pem
 
+      - name: Ensure /var/www/app exists with correct ownership
+        run: |
+          ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
+            sudo mkdir -p /var/www/app &&
+            sudo chown -R ubuntu:ubuntu /var/www/app
+          "
+
       - name: Clear old client build on EC2
         run: |
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
@@ -58,5 +65,6 @@ jobs:
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
             cd /home/ubuntu/app/server && npm ci --production &&
             pm2 startOrReload /home/ubuntu/app/ecosystem.config.js --env production &&
-            pm2 save
+            pm2 save &&
+            sudo systemctl restart nginx
           "
