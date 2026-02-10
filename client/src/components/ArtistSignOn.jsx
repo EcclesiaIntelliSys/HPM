@@ -1,43 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 export default function ArtistSignOn({ onSuccess }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [err, setErr] = useState('');
-  const API_BASE = process.env.REACT_APP_API_URL || '';
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+  const API_BASE = process.env.REACT_APP_API_URL || "";
+
+  // ✅ Grab login() from context
+  const { login } = useContext(AuthContext);
 
   const submit = async (e) => {
     e.preventDefault();
-    setErr('');
+    setErr("");
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
       });
+
+      const data = await res.json();
+
       if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        setErr(j.msg || 'Signon failed');
+        setErr(data.msg || "Signon failed");
+        setLoading(false);
         return;
       }
-      const { token } = await res.json();
-      // store token securely in localStorage for demo; in production use httpOnly cookie
-      localStorage.setItem('token', token);
+
+      if (!data.token) {
+        setErr("No token returned from server");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Use context login instead of localStorage directly
+      login(data.token);
       onSuccess();
     } catch (e) {
-      setErr('Network error');
+      console.error("Login error:", e);
+      setErr("Network error");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-sand-50 rounded-md shadow mt-6">
-      <h2 className="text-lg font-semibold text-olive-900 mb-3">Artist Sign On</h2>
-      <form onSubmit={submit} className="space-y-3">
-        <input className="w-full p-2 rounded border" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
-        <input type="password" className="w-full p-2 rounded border" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
-        {err && <div className="text-red-600">{err}</div>}
-        <button className="w-full bg-olive-800 text-white py-2 rounded">Sign On</button>
-      </form>
-    </div>
+    <main>
+      <img
+        src="/images/mylogo5.png"
+        alt="Heart Prayer Music logo"
+        loading="lazy"
+        className="w-32 md:w-40 lg:w-48 object-contain mx-auto mb-6"
+      />
+      <div className="max-w-md mx-auto p-6 bg-sand-50 rounded-md shadow mt-6 font-mono">
+        <h2 className="text-olive-900 mb-3">Please Sign in</h2>
+        <form onSubmit={submit} className="space-y-3">
+          <input
+            className="w-full p-2 rounded border"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <input
+            type="password"
+            className="w-full p-2 rounded border"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          {err && <div className="text-red-600">{err}</div>}
+          <button
+            className="w-full bg-olive-800 text-white py-2 rounded disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? "Signing in…" : "Sign On"}
+          </button>
+        </form>
+      </div>
+    </main>
   );
 }

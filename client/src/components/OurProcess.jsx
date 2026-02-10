@@ -19,8 +19,8 @@ export default function OurProcess() {
 
         {/* Overlay content */}
         <div className="relative z-10 flex flex-col items-center h-full space-y-8">
-            <p className="mt-5 text-yellow-400 font-serif font-bold text-center text-5xl tracking-tight">
-               Your Custom Song in <span className="mogra-regular text-white text-7xl">3</span> Simple Steps !
+            <p className="mt-5 text-yellow-400 font-serif font-black text-center text-4xl tracking-tight">
+               Your Custom Song in <span className="mogra-regular text-white text-5xl">3</span> Simple Steps !
             </p>
             <br></br>
 

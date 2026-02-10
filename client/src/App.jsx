@@ -11,6 +11,9 @@ import SongSurvey from "./components/SongSurvey";
 import PaymentMock from "./components/PaymentMock";
 import ArtistSignOn from "./components/ArtistSignOn";
 import WorkflowABC from "./components/WorkflowABC";
+import VoucherManage from "./components/VoucherManage";
+import ProjectManage from "./components/ProjectsManagement";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 export default function App() {
   const [project, setProject] = useState(null);
@@ -22,24 +25,31 @@ export default function App() {
       <SongSurvey
         onNext={(data) => {
           setProject(data);
-          navigate("/payment"); // pushes a new history entry
+          navigate("/payment");
         }}
       />
     );
   }
 
-  //   Wrapper for PaymentMock so it can navigate back to home
+  // Wrapper for PaymentMock so it can navigate back to home
   function PaymentWrapper() {
     const navigate = useNavigate();
-     return (
-      <PaymentMock
-        project={project}
-        onDone={() => navigate("/")} // pushes home
+    return <PaymentMock project={project} onDone={() => navigate("/")} />;
+  }
+
+  // ✅ Wrapper for ArtistSignOn so it navigates to WorkflowABC
+  function ArtistSignOnWrapper() {
+    const navigate = useNavigate();
+    return (
+      <ArtistSignOn
+        onSuccess={() => {
+          console.log("Login successful!");
+          navigate("/workflow"); // push to WorkflowABC route
+        }}
       />
     );
   }
 
-  
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-sand-100 text-olive-900">
@@ -48,20 +58,39 @@ export default function App() {
             path="/"
             element={
               <>
-                <Banner />        {/* Banner will use useNavigate internally */}
+                <Banner />
                 <Carousel />
                 <MenuNav />
-                <Market />        {/* Market will use useNavigate internally */}
-                <OurProcess />    {/* This will use useNavigate internally */}           
-                <SampleAudio />   {/* This will use useNavigate internally */}          
+                <Market />
+                <OurProcess />
+                <SampleAudio />
                 <Footer />
               </>
             }
           />
           <Route path="/create" element={<SongSurveyWrapper />} />
           <Route path="/payment" element={<PaymentWrapper />} />
-          <Route path="/artist/flow" element={<ArtistSignOn />} />
-          <Route path="/workflow" element={<WorkflowABC />} />
+          <Route path="/creatives" element={<ArtistSignOnWrapper />} />
+          <Route path="/workflow" element={<WorkflowABC />} />{" "}
+          {/* Protected route */}
+          <Route
+            path="/vouchermanage"
+            element={
+              <ProtectedRoute>
+                {" "}
+                <VoucherManage />{" "}
+              </ProtectedRoute>
+            }
+          />{" "}
+          <Route
+            path="/projectmanage"
+            element={
+              <ProtectedRoute>
+                {" "}
+                <ProjectManage />{" "}
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </div>
     </BrowserRouter>

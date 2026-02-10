@@ -1,7 +1,13 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+
 const UserSchema = new mongoose.Schema({
-  email:{type:String,required:true,unique:true},
-  passwordHash:{type:String,required:true},
-  role:{type:String,default:'artist'}
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: {
+    type: String,
+    default: "artist",
+    maxlength: [6, "Role must be at most 6 characters long"],
+  },
 });
-module.exports = mongoose.model('User',UserSchema);
+
+module.exports = mongoose.model("User", UserSchema);

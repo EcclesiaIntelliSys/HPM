@@ -1,14 +1,19 @@
-import React from 'react';
+import React, { useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
 
 export default function MenuNav({ onNavigate }) {
+  const { token, logout, user } = useContext(AuthContext);
+
   return (
     <nav className="max-w-6xl mx-auto py-1">
-      <ul className="flex flex-col md:flex-row items-center carrois-gothic-sc-regular justify-center
-                     space-y-2 md:space-y-0 md:space-x-6
-                     bg-sand-50 rounded-md p-3 md:p-4 shadow-sm">
+      <ul
+        className="flex flex-col md:flex-row items-center carrois-gothic-sc-regular justify-center
+                   space-y-2 md:space-y-0 md:space-x-6
+                   bg-sand-50 rounded-md p-3 md:p-4 shadow-sm"
+      >
         <li>
           <button
-            onClick={() => onNavigate('create')}
+            onClick={() => onNavigate("create")}
             className="text-olive-900 hover:text-olive-700 hover:bg-terra-100"
           >
             Create Song
@@ -16,7 +21,7 @@ export default function MenuNav({ onNavigate }) {
         </li>
         <li>
           <button
-            onClick={() => onNavigate('about')}
+            onClick={() => onNavigate("about")}
             className="text-olive-900 hover:text-olive-700 hover:bg-terra-100"
           >
             About Us
@@ -24,7 +29,7 @@ export default function MenuNav({ onNavigate }) {
         </li>
         <li>
           <button
-            onClick={() => onNavigate('testimonials')}
+            onClick={() => onNavigate("testimonials")}
             className="text-olive-900 hover:text-olive-700 hover:bg-terra-100"
           >
             Testimonials

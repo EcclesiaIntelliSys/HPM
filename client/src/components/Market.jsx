@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import { FaMusic } from "react-icons/fa6";
 import { ImGift } from "react-icons/im";
 import { useNavigate } from "react-router-dom";
@@ -20,14 +20,16 @@ export default function Market() {
 
         <div className="text-gray-800 text-center mt-6 space-y-2">
           <p>Not a generic song. Not something anyone else could give.</p>
-          <p>A song written from Scripture, shaped by your story, and offered as a gift of faith, love, and prayer.</p>
+          <p>
+            A song written from Scripture, shaped by your story, and offered as
+            a gift of faith, love, and prayer.
+          </p>
         </div>
 
         {/* Center the button using a flex parent */}
         <div className="flex justify-center mt-6">
           <button
-            onClick={() => navigate("/create")
-            }
+            onClick={() => navigate("/create")}
             className="my-2 bg-orange-800 hover:bg-rose-700 text-white px-5 py-2 rounded-md text-sm shadow-lg flex items-center gap-2"
           >
             <FaMusic className="w-4 h-4 text-white" />

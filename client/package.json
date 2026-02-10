@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.19",
+    "axios": "^1.13.5",
     "HPS": "file:..",
+    "jwt-decode": "^4.0.0",
     "my-music-app": "file:..",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
