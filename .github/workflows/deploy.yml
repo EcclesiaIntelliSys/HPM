@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main # deploy only when pushing to main
+      - main
 
 jobs:
   deploy:
@@ -32,11 +32,12 @@ jobs:
       - name: Clear old client build on EC2
         run: |
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
-            rm -rf /home/ubuntu/app/client/build
+            sudo rm -rf /var/www/app/*
           "
 
       - name: Rsync server + client build to EC2
         run: |
+          # Sync backend code to /home/ubuntu/app
           rsync -avz --delete \
             --exclude 'node_modules' \
             --exclude '.git' \
@@ -46,9 +47,11 @@ jobs:
             --exclude 'coverage' \
             -e "ssh -i ec2-key.pem -o StrictHostKeyChecking=no" \
             ./server ./ecosystem.config.js ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app
+
+          # Sync frontend build to /var/www/app
           rsync -avz --delete \
             -e "ssh -i ec2-key.pem -o StrictHostKeyChecking=no" \
-            ./client/build ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/client
+            ./client/build/ ubuntu@${{ secrets.EC2_HOST }}:/var/www/app/
 
       - name: Install server dependencies & restart app
         run: |
