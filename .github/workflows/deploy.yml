@@ -22,7 +22,8 @@ jobs:
         run: |
           cd client
           npm ci
-          npm run build
+          # Inject API base for production build
+          REACT_APP_API_URL="http://54.169.54.190/api" npm run build
 
       - name: Setup SSH key
         run: |
@@ -67,4 +68,16 @@ jobs:
             pm2 startOrReload /home/ubuntu/app/ecosystem.config.js --env production &&
             pm2 save &&
             sudo systemctl restart nginx
+          "
+
+      - name: Health check backend
+        run: |
+          ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
+            curl -f http://localhost:5000/api/health || exit 1
+          "
+
+      - name: Health check frontend API proxy
+        run: |
+          ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
+            curl -f http://54.169.54.190/api/projects || exit 1
           "
