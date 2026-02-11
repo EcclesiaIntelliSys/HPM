@@ -8,7 +8,7 @@ module.exports = {
         PORT: 5000,
         MONGO_URI:
           "mongodb+srv://admin:admin@cluster0.uwzkubf.mongodb.net/HPS_DEV?retryWrites=true&w=majority",
-        REACT_APP_API_URL: "http://54.169.54.190/api",
+        REACT_APP_API_URL: "http://54.169.54.190",
         JWT_SECRET: "quickbrownfox",
       },
     },

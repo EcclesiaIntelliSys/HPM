@@ -23,7 +23,7 @@ jobs:
           cd client
           npm ci
           # Inject API base for production build
-          REACT_APP_API_URL="http://54.169.54.190/api" npm run build
+          REACT_APP_API_URL="http://54.169.54.190" npm run build
 
       - name: Setup SSH key
         run: |
