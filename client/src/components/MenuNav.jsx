@@ -1,8 +1,16 @@
 import React, { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
-export default function MenuNav({ onNavigate }) {
+export default function MenuNav() {
   const { token, logout, user } = useContext(AuthContext);
+  const navigate = useNavigate(); // ✅ hook for navigation
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <nav className="max-w-6xl mx-auto py-1">
@@ -13,7 +21,7 @@ export default function MenuNav({ onNavigate }) {
       >
         <li>
           <button
-            onClick={() => onNavigate("create")}
+            onClick={() => navigate("/create")}
             className="text-olive-900 hover:text-olive-700 hover:bg-terra-100"
           >
             Create Song
@@ -21,18 +29,18 @@ export default function MenuNav({ onNavigate }) {
         </li>
         <li>
           <button
-            onClick={() => onNavigate("about")}
+            onClick={() => scrollToSection("sampleaudio-section")}
             className="text-olive-900 hover:text-olive-700 hover:bg-terra-100"
           >
-            About Us
+            Sample Songs
           </button>
         </li>
         <li>
           <button
-            onClick={() => onNavigate("testimonials")}
+            onClick={() => scrollToSection("ourprocess-section")}
             className="text-olive-900 hover:text-olive-700 hover:bg-terra-100"
           >
-            Testimonials
+            Our Process
           </button>
         </li>
       </ul>

@@ -5,7 +5,7 @@ import { FaRegCirclePlay } from "react-icons/fa6";
 import { IoPauseCircle } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 
-export default function SampleAudio() {
+export default function SampleAudio({ id }) {
   const navigate = useNavigate();
 
   const sampleFiles = [
@@ -55,7 +55,10 @@ export default function SampleAudio() {
   }, [playingIndex]);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 flex flex-col md:flex-row gap-6 shadow-md">
+    <div
+      id={id}
+      className="max-w-6xl mx-auto p-4 flex flex-col md:flex-row gap-6 shadow-md"
+    >
       {/* First div: 75% on medium+ screens */}
       <div className="md:w-3/4 w-full">
         <p className="text-center md:text-left mx-2 text-olive-900 font-serif font-bold text-3xl">

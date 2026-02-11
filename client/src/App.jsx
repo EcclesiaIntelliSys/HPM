@@ -62,8 +62,9 @@ export default function App() {
                 <Carousel />
                 <MenuNav />
                 <Market />
-                <OurProcess />
-                <SampleAudio />
+                <OurProcess id="ourprocess-section" />
+                {/* optional: add id for other sections */}
+                <SampleAudio id="sampleaudio-section" />
                 <Footer />
               </>
             }

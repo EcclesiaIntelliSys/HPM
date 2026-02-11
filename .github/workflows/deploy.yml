@@ -37,12 +37,6 @@ jobs:
             sudo chown -R ubuntu:ubuntu /var/www/app
           "
 
-      - name: Clear old client build on EC2
-        run: |
-          ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
-            sudo rm -rf /var/www/app/*
-          "
-
       - name: Rsync server + client build to EC2
         run: |
           # Sync backend code to /home/ubuntu/app
@@ -56,8 +50,11 @@ jobs:
             -e "ssh -i ec2-key.pem -o StrictHostKeyChecking=no" \
             ./server ./ecosystem.config.js ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app
 
-          # Sync frontend build to /var/www/app
+          # Sync frontend build to /var/www/app, excluding public assets
           rsync -avz --delete \
+            --exclude 'media' \
+            --exclude 'images' \
+            --exclude 'videos' \
             -e "ssh -i ec2-key.pem -o StrictHostKeyChecking=no" \
             ./client/build/ ubuntu@${{ secrets.EC2_HOST }}:/var/www/app/
 

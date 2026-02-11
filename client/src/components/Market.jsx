@@ -3,10 +3,10 @@ import { FaMusic } from "react-icons/fa6";
 import { ImGift } from "react-icons/im";
 import { useNavigate } from "react-router-dom";
 
-export default function Market() {
+export default function Market({ id }) {
   const navigate = useNavigate();
   return (
-    <div className="max-w-6xl mx-auto">
+    <div id={id} className="max-w-6xl mx-auto">
       <div className="relative w-full h-auto overflow-hidden shadow-md bg-gray-100 px-6 py-8">
         <p className="text-gray-800 text-center text-sm tracking-widest">
           CUSTOM SCRIPTURE SONGS FOR THE PEOPLE WHO MATTER MOST
