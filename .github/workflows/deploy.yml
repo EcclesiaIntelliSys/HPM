@@ -22,8 +22,8 @@ jobs:
         run: |
           cd client
           npm ci
-          # Inject API base for production build
-          REACT_APP_API_URL="http://54.169.54.190" npm run build
+          # Inject API base for production build using your domain
+          REACT_APP_API_URL="https://heartprayermusic.com" npm run build
 
       - name: Setup SSH key
         run: |
@@ -79,5 +79,5 @@ jobs:
       - name: Health check frontend API proxy
         run: |
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
-            curl -f http://54.169.54.190/api/projects || exit 1
+            curl -f https://heartprayermusic.com/api/projects || exit 1
           "
