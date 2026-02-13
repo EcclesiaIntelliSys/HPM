@@ -1046,7 +1046,7 @@ export default function SongRequestForm() {
                   {showTerms && (
                     <Modal
                       title="Terms of Service"
-                      filePath="/tos.html"
+                      filePath="/tos.pdf"
                       onClose={() => setShowTerms(false)}
                     />
                   )}{" "}

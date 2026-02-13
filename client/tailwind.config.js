@@ -22,6 +22,10 @@ module.exports = {
           600: "#b85a3c",
         },
       },
+      fontFamily: {
+        // This adds 'font-montserrat' utility class
+        montserrat: ["Montserrat", "sans-serif"],
+      },
     },
   },
   plugins: [

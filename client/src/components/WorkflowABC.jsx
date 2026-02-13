@@ -20,7 +20,7 @@ export default function WorkflowABC() {
   const boxClass =
     "p-4 bg-sand-50 shadow text-center hover:bg-green-200 focus:outline-none rounded-2xl";
   return (
-    <main className="max-w-6xl mx-auto p-6 relative">
+    <main className="max-w-6xl mx-auto p-6 relative carrois-gothic-sc-regular">
       {/* Signed in info in upper left logo */}
       <img
         src="/images/mylogo5.png"

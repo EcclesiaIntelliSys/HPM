@@ -52,8 +52,6 @@ jobs:
 
           # Sync frontend build to /var/www/app, excluding public assets
           rsync -avz --delete \
-            --exclude 'media' \
-            --exclude 'images' \
             --exclude 'videos' \
             -e "ssh -i ec2-key.pem -o StrictHostKeyChecking=no" \
             ./client/build/ ubuntu@${{ secrets.EC2_HOST }}:/var/www/app/

@@ -27,7 +27,7 @@ export default function OurProcess({ id }) {
 
           <div className="items-center delius-regular">
             <div className="flex mb-5">
-              <div className="ml-5 text-xl md:text-2xl w-14 h-14 rounded-full bg-white flex items-center justify-center text-black font-black">
+              <div className="ml-5 text-xl md:text-2xl w-14 h-14 rounded-full bg-white flex items-center justify-center text-black font-bold">
                 1
               </div>
               <div className="text-2xl md:text-3xl flex items-center justify-center ml-3 text-white font-medium tracking-tight">
