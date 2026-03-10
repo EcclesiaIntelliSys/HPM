@@ -1,5 +1,13 @@
 const mongoose = require("mongoose");
 
+const CounterSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  seq: { type: Number, default: 0 },
+  date: { type: String }, // store YYYYMMDD
+});
+
+const Counter = mongoose.model("Counter", CounterSchema);
+
 const LogSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
   actor: { type: String, default: "SYSTEM" },
@@ -10,10 +18,8 @@ function generateDateCode() {
   const now = new Date();
   const day = String(now.getDate()).padStart(2, "0");
   const month = String(now.getMonth() + 1).padStart(2, "0");
-  const hours = String(now.getHours()).padStart(2, "0");
-  const minutes = String(now.getMinutes()).padStart(2, "0");
-  const seconds = String(now.getSeconds()).padStart(2, "0");
-  return `${day}${month}${hours}${minutes}${seconds}`;
+  const year = String(now.getFullYear()).slice(-2); // last two digits
+  return `${day}${month}${year}`;
 }
 
 const ProjectSchema = new mongoose.Schema(
@@ -29,6 +35,8 @@ const ProjectSchema = new mongoose.Schema(
     email: { type: String, required: true },
     ack: { type: Boolean, required: true },
     createdAt: { type: Date, default: Date.now },
+    targetdate: { type: Date },
+    deliverydate: { type: Date },
     status: { type: String, default: "Queued for Lyricist" },
     logs: {
       type: [LogSchema],
@@ -51,13 +59,54 @@ const ProjectSchema = new mongoose.Schema(
     assessor_start: { type: Date },
     assessor_end: { type: Date },
     voucherNo: { type: String },
+    songtitle: { type: String },
+    lyrics: { type: String },
+    lock: {
+      user: String,
+      timestamp: Date,
+    },
+    filename: { type: String },
   },
+
   { collection: "projects" },
 );
 
-ProjectSchema.pre("save", function (next) {
+// Add index here
+ProjectSchema.index({
+  status: 1,
+  "lock.timestamp": 1,
+});
+
+// Pre-save hook to generate songcode with padded sequence
+ProjectSchema.pre("save", async function (next) {
   if (this.isNew && !this.songcode) {
-    this.songcode = generateDateCode();
+    try {
+      const now = new Date();
+      const today = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+
+      let counter = await Counter.findOne({ name: "project_seq" });
+
+      if (!counter || counter.date !== today) {
+        // Reset sequence for new day
+        counter = await Counter.findOneAndUpdate(
+          { name: "project_seq" },
+          { seq: 49, date: today },
+          { new: true, upsert: true },
+        );
+      } else {
+        // Increment sequence for same day
+        counter = await Counter.findOneAndUpdate(
+          { name: "project_seq" },
+          { $inc: { seq: 2 } },
+          { new: true },
+        );
+      }
+
+      const paddedSeq = String(counter.seq).padStart(4, "0");
+      this.songcode = `${generateDateCode()}-${paddedSeq}`;
+    } catch (err) {
+      return next(err);
+    }
   }
   next();
 });

@@ -19,6 +19,11 @@ const VoucherSchema = new mongoose.Schema(
     claimed: { type: Boolean },
     claimedby: { type: String },
     claimdate: { type: Date },
+    role: {
+      type: String,
+      default: "000000",
+      maxlength: [6, "Role must be at most 6 characters long"],
+    },
   },
   { collection: "vouchers" },
 );

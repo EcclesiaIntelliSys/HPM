@@ -109,6 +109,7 @@ export default function SongRequestForm() {
     voucherNo: "",
   });
   const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [touched, setTouched] = useState({
     otherRelation: false,
     recipient: false,
@@ -183,9 +184,9 @@ export default function SongRequestForm() {
     if (s === 5) return form.genre !== "" && form.voice !== "";
     if (s === 6)
       return (
-        /\S+@\S+\.\S+/.test(form.email) &&
-        form.ack === true &&
-        form.voucherNo.trim() !== ""
+        /\S+@\S+\.\S+/.test(form.email) && form.ack === true
+        //&&
+        // form.voucherNo.trim() !== ""
       );
 
     // if (s === 1) return form.genre !== "";
@@ -212,12 +213,13 @@ export default function SongRequestForm() {
     delete payload.otherRelation; // remove helper field
     // console.log("Payload for Postman:\n", JSON.stringify(payload, null, 2));
     try {
+      setLoading(true);
       setStatus("Saving...");
 
       const res = await fetch(`${API_BASE}/api/projects`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -225,21 +227,23 @@ export default function SongRequestForm() {
       setStatus("Saved successfully.");
       setOrderRef(data.songcode);
       setModalOpen(true);
-      setForm({
-        relation: "",
-        recipient: "",
-        agegroup: "",
-        qualities: "",
-        moment: "",
-        specialmsg: "",
-        genre: "",
-        voice: "",
-        email: "",
-        ack: false,
-        voucherNo: "",
-      });
     } catch (err) {
       setStatus("Error saving: " + err.message);
+    } finally {
+      setLoading(false);
+      // setForm({
+      //   relation: "",
+      //   recipient: "",
+      //   agegroup: "",
+      //   qualities: "",
+      //   moment: "",
+      //   specialmsg: "",
+      //   genre: "",
+      //   voice: "",
+      //   email: "",
+      //   ack: false,
+      //   voucherNo: "",
+      // });
     }
   };
 
@@ -254,6 +258,8 @@ export default function SongRequestForm() {
   const isSpecialmsgError = touched.specialmsg && !form.moment?.trim();
   const isEmailError = touched.email && !form.email?.trim();
   const isAckError = touched.ack && !form.ack;
+
+  const valueClass = "font-black text-blue-800 italic delius-regular"; //class for my field values upon checkout
 
   const handleNext = () => {
     // mark step-1 fields as touched
@@ -300,6 +306,14 @@ export default function SongRequestForm() {
     }
   }, [step]);
 
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-40 z-50">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
+
   return (
     <form className="max-w-3xl mx-auto p-4" onSubmit={handleSubmit} noValidate>
       {/* Page label and progress bar */}
@@ -326,9 +340,7 @@ export default function SongRequestForm() {
           />
         </div>
       </div>
-
       {/* ...rest of the form (pages, navigation, status) */}
-
       {/* Page 1 */}
       {step === 1 && (
         <div>
@@ -517,7 +529,6 @@ export default function SongRequestForm() {
           </div>
         </div>
       )}
-
       {/* Page 2 */}
       {step === 2 && (
         // {/* QUALITIES */}
@@ -555,7 +566,7 @@ export default function SongRequestForm() {
                 isQualitiesError ? "qualities-error" : undefined
               }
               placeholder="Write With Your Heart! E.g. 'He makes me feel loved in a way no one else ever has.' Or 'Kind-hearted, loyal, and endlessly loving.'"
-              maxLength={250} // ✅ enforce max length
+              maxLength={1000} // ✅ enforce max length
             />
           </label>
 
@@ -569,11 +580,10 @@ export default function SongRequestForm() {
           )}
           {/* Character counter */}
           <p className="font-thin font-mono mt-0 text-xs text-gray-600 italic text-end p-0">
-            {form.qualities.length}/250
+            {form.qualities.length}/1000
           </p>
         </div>
       )}
-
       {/* Page 3 */}
       {step === 3 && (
         // {/* MEMORIES */}
@@ -606,7 +616,7 @@ export default function SongRequestForm() {
               aria-invalid={isMomentError}
               aria-describedby={isMomentError ? "moment-error" : undefined}
               placeholder="Hint: These can be big milestones or small everyday moments—anything that feels meaningful to you. A moment with them you’ll never forget, a shared adventure, or even a quiet memory that means a lot."
-              maxLength={250} // ✅ enforce max length
+              maxLength={1000} // ✅ enforce max length
             />
           </label>
 
@@ -620,11 +630,10 @@ export default function SongRequestForm() {
           )}
           {/* Character counter */}
           <p className="font-thin font-mono mt-0 text-xs text-gray-600 italic text-end p-0">
-            {form.moment.length}/250
+            {form.moment.length}/1000
           </p>
         </div>
       )}
-
       {step === 4 && (
         // {/* SPECIAL MESSAGE */}
         <div>
@@ -660,7 +669,7 @@ export default function SongRequestForm() {
                 isSpecialmsgError ? "specialmsg-error" : undefined
               }
               placeholder="We’ll try our best to weave this message into the song, so write what you want them to hear when the music plays."
-              maxLength={250} // ✅ enforce max length
+              maxLength={1000} // ✅ enforce max length
             />
           </label>
 
@@ -674,11 +683,10 @@ export default function SongRequestForm() {
           )}
           {/* Character counter */}
           <p className="font-thin font-mono mt-0 text-xs text-gray-600 italic text-end p-0">
-            {form.specialmsg.length}/250
+            {form.specialmsg.length}/1000
           </p>
         </div>
       )}
-
       {step === 5 && (
         // {/* GENRE */}
         <div>
@@ -766,7 +774,6 @@ export default function SongRequestForm() {
           </p>
         </div>
       )}
-
       {step === 6 && (
         // {/* CHECKOUT */}
         <div className="overflow-hidden">
@@ -786,31 +793,31 @@ export default function SongRequestForm() {
               <br></br>
               <p className="font-light">
                 A custom song dedicated to{" "}
-                <span className="font-black text-blue-800 italic delius-regular">
+                <span className="font-semibold text-blue-800 font-montserrat">
                   {form.recipient}{" "}
                 </span>
                 (
-                <span className="font-black text-blue-800 italic delius-regular">
+                <span className="font-semibold text-blue-800 font-montserrat">
                   {form.relation === "Other"
                     ? form.otherRelation
                     : form.relation}
                 </span>
                 ). <span> </span>
                 {form.recipient}'s age group is{" "}
-                <span className="font-black text-blue-800 italic delius-regular">
+                <span className="font-semibold text-blue-800 font-montserrat">
                   {form.agegroup}
                 </span>
                 .
               </p>
               <div className="flex text-md gap-5">
                 <span className="w-1/4 text-right">Special Qualities :</span>
-                <span className="w-3/4 text-blue-800 italic text-left border-2 px-1 font-black text-blue-800 italic delius-regular">
+                <span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
                   {form.qualities}
                 </span>
               </div>
               <div className="flex text-md gap-5">
                 <span className="w-1/4 text-right">Memorable Moments :</span>
-                <span className="w-3/4 text-blue-800 italic text-left border-2 px-1 font-black text-blue-800 italic delius-regular">
+                <span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
                   {form.moment}
                 </span>
               </div>
@@ -818,13 +825,13 @@ export default function SongRequestForm() {
                 <span className="w-1/4 text-right">
                   What This Song Should Say :
                 </span>
-                <span className="w-3/4 text-blue-800 italic text-left border-2 px-1 font-black text-blue-800 italic delius-regular">
+                <span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
                   {form.specialmsg}
                 </span>
               </div>
               <div className="flex text-md gap-5">
                 <span className="w-1/4 text-right">Song Style / Genre :</span>
-                <span className="w-3/4 text-blue-800 italic text-left border-2 px-1 font-black text-blue-800 italic delius-regular">
+                <span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
                   {form.genre}
                 </span>
               </div>
@@ -832,7 +839,7 @@ export default function SongRequestForm() {
                 <span className="w-1/4 text-right">
                   Preferred Voice Gender :
                 </span>
-                <span className="w-3/4 text-blue-800 italic text-left border-2 px-1 font-black text-blue-800 italic delius-regular">
+                <span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
                   {form.voice}
                 </span>
               </div>
@@ -841,7 +848,7 @@ export default function SongRequestForm() {
               <br></br>
             </div>
             <div className="flex flex-col md:flex-row gap-6 ">
-              <div className="w-2/4 shadow-md p-4 bg-sand-300 radius-md shadow-xl border-gray-300 border-2">
+              <div className="w-full md:w-2/4 shadow-md p-4 bg-sand-300 radius-md shadow-xl border-gray-300 border-2">
                 <div className="font-mono text-xl font-black">
                   Order Summary
                 </div>
@@ -904,7 +911,7 @@ export default function SongRequestForm() {
                 </div>
               </div>
 
-              <div className="w-2/4 delius-regular text-md space-y-0">
+              <div className="w-full md:w-2/4 font-montserrat text-md space-y-0">
                 {/* Existing feature list */}
                 <div className="border-2 border-gray-200 bg-gradient-to-b from-black to-yellow-700 px-4 py-2 shadow rounded-xl mb-4">
                   <div className="flex gap-2 items-center ">
@@ -1066,7 +1073,6 @@ export default function SongRequestForm() {
       )}
 
       {/* Navigation */}
-
       <div className="flex justify-between mt-4 roboto-condensed-forms font-light">
         {step === 6 ? (
           <button
@@ -1117,6 +1123,7 @@ export default function SongRequestForm() {
           onClose={() => {
             setModalOpen(false);
             navigate("/");
+
             // ✅ redirect to front page
           }}
         >

@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { useState } from "react";
+
 import Banner from "./components/Banner";
 import Carousel from "./components/Carousel";
 import MenuNav from "./components/MenuNav";
@@ -14,11 +15,15 @@ import WorkflowABC from "./components/WorkflowABC";
 import VoucherManage from "./components/VoucherManage";
 import ProjectManage from "./components/ProjectsManagement";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RegisterForm from "./components/RegisterForm";
+import VerifyPage from "./components/VerifyPage";
+import LyricistProject from "./components/LyricistProject";
+import { useNavigate } from "react-router-dom";
 
 export default function App() {
   const [project, setProject] = useState(null);
 
-  // Wrapper that sets project then navigates to /payment
+  // Wrappers stay as normal components that use useNavigate internally
   function SongSurveyWrapper() {
     const navigate = useNavigate();
     return (
@@ -31,69 +36,92 @@ export default function App() {
     );
   }
 
-  // Wrapper for PaymentMock so it can navigate back to home
   function PaymentWrapper() {
     const navigate = useNavigate();
     return <PaymentMock project={project} onDone={() => navigate("/")} />;
   }
 
-  // ✅ Wrapper for ArtistSignOn so it navigates to WorkflowABC
   function ArtistSignOnWrapper() {
     const navigate = useNavigate();
     return (
       <ArtistSignOn
         onSuccess={() => {
           console.log("Login successful!");
-          navigate("/workflow"); // push to WorkflowABC route
+          navigate("/workflow");
         }}
       />
     );
   }
 
-  return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-sand-100 text-olive-900">
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <>
-                <Banner />
-                <Carousel />
-                <MenuNav />
-                <Market />
-                <OurProcess id="ourprocess-section" />
-                {/* optional: add id for other sections */}
-                <SampleAudio id="sampleaudio-section" />
-                <Footer />
-              </>
-            }
-          />
-          <Route path="/create" element={<SongSurveyWrapper />} />
-          <Route path="/payment" element={<PaymentWrapper />} />
-          <Route path="/creatives" element={<ArtistSignOnWrapper />} />
-          <Route path="/workflow" element={<WorkflowABC />} />{" "}
-          {/* Protected route */}
-          <Route
-            path="/vouchermanage"
-            element={
-              <ProtectedRoute>
-                {" "}
-                <VoucherManage />{" "}
-              </ProtectedRoute>
-            }
-          />{" "}
-          <Route
-            path="/projectmanage"
-            element={
-              <ProtectedRoute>
-                {" "}
-                <ProjectManage />{" "}
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </div>
-    </BrowserRouter>
-  );
+  // ✅ Define routes with createBrowserRouter
+  const router = createBrowserRouter([
+    {
+      path: "/",
+      element: (
+        <div className="min-h-screen bg-sand-100 text-olive-900">
+          <Banner />
+          <Carousel />
+          <MenuNav />
+          <Market />
+          <OurProcess id="ourprocess-section" />
+          <SampleAudio id="sampleaudio-section" />
+          <Footer />
+        </div>
+      ),
+    },
+    {
+      path: "/create",
+      element: <SongSurveyWrapper />,
+    },
+    {
+      path: "/payment",
+      element: <PaymentWrapper />,
+    },
+    {
+      path: "/creatives",
+      element: <ArtistSignOnWrapper />,
+    },
+    {
+      path: "/register",
+      element: <RegisterForm />,
+    },
+    {
+      path: "/workflow",
+      element: (
+        <ProtectedRoute>
+          <WorkflowABC />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/vouchermanage",
+      element: (
+        <ProtectedRoute>
+          <VoucherManage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/projectmanage",
+      element: (
+        <ProtectedRoute>
+          <ProjectManage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/lyricist/:id",
+      element: (
+        <ProtectedRoute>
+          <LyricistProject />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/verify/:token",
+      element: <VerifyPage />,
+    },
+  ]);
+
+  return <RouterProvider router={router} />;
 }

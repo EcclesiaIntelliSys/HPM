@@ -1,5 +1,6 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom"; // ✅ add navigation
 
 export default function ArtistSignOn({ onSuccess }) {
   const [username, setUsername] = useState("");
@@ -8,8 +9,8 @@ export default function ArtistSignOn({ onSuccess }) {
   const [loading, setLoading] = useState(false);
   const API_BASE = process.env.REACT_APP_API_URL || "";
 
-  // ✅ Grab login() from context
   const { login } = useContext(AuthContext);
+  const navigate = useNavigate(); // ✅ hook for navigation
 
   const submit = async (e) => {
     e.preventDefault();
@@ -19,6 +20,7 @@ export default function ArtistSignOn({ onSuccess }) {
       const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username, password }),
       });
 
@@ -36,7 +38,6 @@ export default function ArtistSignOn({ onSuccess }) {
         return;
       }
 
-      // ✅ Use context login instead of localStorage directly
       login(data.token);
       onSuccess();
     } catch (e) {
@@ -79,6 +80,17 @@ export default function ArtistSignOn({ onSuccess }) {
             {loading ? "Signing in…" : "Sign On"}
           </button>
         </form>
+
+        {/* ✅ Register option */}
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-600">Don’t have an account?</p>
+          <button
+            onClick={() => navigate("/register")}
+            className="mt-2 w-full bg-orange-600 text-white py-2 rounded hover:bg-orange-700"
+          >
+            Register
+          </button>
+        </div>
       </div>
     </main>
   );

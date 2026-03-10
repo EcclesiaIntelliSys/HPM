@@ -2,6 +2,10 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
+const cookieParser = require("cookie-parser");
+const fs = require("fs");
+const http = require("http");
+const https = require("https");
 
 if (process.env.NODE_ENV !== "production") {
   require("dotenv").config();
@@ -9,51 +13,88 @@ if (process.env.NODE_ENV !== "production") {
 
 const authRoutes = require("./routes/auth");
 const protectedRoutes = require("./routes/protected");
-const projectRoutes = require("./routes/projects");
 const paymentRoutes = require("./routes/payments");
-const vouchersRouter = require("./routes/vouchers");
-const projectsRouter = require("./routes/projects");
+const vouchersRoutes = require("./routes/vouchers");
+const projectsRoutes = require("./routes/projects");
+const clockifyRoutes = require("./routes/clockify");
+const opsconfigRoutes = require("./routes/opsconfig");
+const { cleanupOrphan } = require("./utils/cleanupOrphan");
 
-// 🔒 Import auth middleware
 const auth = require("./middleware/auth");
 
 const app = express();
-app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
-// Connect to MongoDB Atlas
+/* -------------------- middleware -------------------- */
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
+);
+
+/* -------------------- database -------------------- */
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Mongo connected"))
   .catch((err) => console.error(err));
 
-// API routes
+/* -------------------- routes -------------------- */
 app.use("/api/auth", authRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/payments", paymentRoutes);
 
-// Protected admin routes
-app.use("/api/vouchermanage", auth, vouchersRouter);
-app.use("/api/projectsmanage", auth, projectsRouter);
+app.use("/api/vouchersmanage", auth, vouchersRoutes);
+app.use("/api/projectsmanage", auth, projectsRoutes);
+app.use("/api/clockify", auth, clockifyRoutes);
 
-// Public customer routes
-app.use("/api/vouchers", vouchersRouter); //GET vouchers without auth
-app.use("/api/projects", projectsRouter); // POST survey projects without auth
+app.use("/api/vouchers", vouchersRoutes);
+app.use("/api/projects", projectsRoutes);
+app.use("/api/opsconfig", opsconfigRoutes);
 
-// Serve React build in production
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+//test
+app.get("/check-cookie", (req, res) => {
+  console.log("Cookies received by backend:", req.cookies);
+  res.json({ cookies: req.cookies });
+});
+
+/* -------------------- production build -------------------- */
 if (process.env.NODE_ENV === "production") {
-  console.log("xxxxxxxxxxx...");
+  app.set("trust proxy", 1); // REQUIRED for secure cookies behind SSL
+
   app.use(express.static(path.join(__dirname, "../client/build")));
 
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
   });
 
-  // Catch-all route for React Router
   app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "../client/build", "index.html"));
   });
 }
 
+/* -------------------- server startup -------------------- */
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+if (process.env.NODE_ENV === "production") {
+  // 🔐 PROD: SSL is handled upstream (Cloudflare / Nginx / Render / etc.)
+  http.createServer(app).listen(PORT, () => {
+    console.log(`Production server running on port ${PORT}`);
+  });
+} else {
+  // 🧪 DEV: Local HTTPS via mkcert
+  const key = fs.readFileSync("./certs/localhost-key.pem");
+  const cert = fs.readFileSync("./certs/localhost.pem");
+
+  https.createServer({ key, cert }, app).listen(PORT, () => {
+    console.log(`Dev HTTPS server running at https://localhost:${PORT}`);
+  });
+}
+
+//removes expired locks
+setInterval(() => {
+  cleanupOrphan();
+}, 60000); // every 1 minute

@@ -93,7 +93,7 @@ export default function SampleAudio({ id }) {
         </p>
         <div className="pl-2 mt-4">
           {sampleFiles.map((file, i) => (
-            <div key={i} className="items-center p-2">
+            <div key={i} className="flex justify-center p-2">
               <audio ref={audioRefs[i]} src={file.src} />
               <button
                 onClick={() => togglePlay(i)}

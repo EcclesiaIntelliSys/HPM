@@ -9,7 +9,8 @@ export default function Footer() {
     <footer className="mt-8 bg-olive-50 border-t border-sand-200 font-montserrat">
       <div className="max-w-6xl mx-auto p-6 flex flex-col md:flex-row items-center justify-between">
         <div className="text-sand-800 text-xs">
-          © {new Date().getFullYear()} Heart Prayer Music
+          <p>© {new Date().getFullYear()} Heart Prayer Music</p>
+          <p>Wyoming, USA</p>
         </div>
         <div className="flex space-x-4 mt-4 md:mt-0 items-center">
           {/* Terms of Service */}{" "}
