@@ -4,6 +4,7 @@ const Config = require("../models/opsconfig");
 
 router.get("/client-config", async (req, res) => {
   const config = await Config.findOne({});
+  console.log("Im hitted");
   res.json({
     // accessTokenAge: config.accessTokenAge,
     // refreshTokenAge: config.refreshTokenAge,
@@ -16,3 +17,5 @@ router.get("/client-config", async (req, res) => {
     introDiscount: config.introDiscount,
   });
 });
+
+module.exports = router;

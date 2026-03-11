@@ -1,5 +1,4 @@
 import React, { createContext, useEffect, useState } from "react";
-import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import api from "../api/api";
 
@@ -8,6 +7,8 @@ export const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(null);
+  // Prevent repeated failed refresh attempts
+  const [refreshing, setRefreshing] = useState(false);
 
   // ✅ Interceptor for reactive refresh
   api.interceptors.response.use(
@@ -18,13 +19,14 @@ export function AuthProvider({ children }) {
       if (
         error.response?.status === 401 &&
         !originalRequest._retry &&
-        !originalRequest.url.includes("/api/auth/refresh")
+        !originalRequest.url.includes("/api/auth/refresh") &&
+        !refreshing
       ) {
         originalRequest._retry = true;
         console.log(
           `[${new Date().toISOString()}] Access token expired. Attempting refresh...`,
         );
-
+        setRefreshing(true);
         try {
           const res = await api.get("/api/auth/refresh");
           const newToken = res.data.token;
@@ -35,14 +37,16 @@ export function AuthProvider({ children }) {
           );
 
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          setRefreshing(false);
           return api(originalRequest);
         } catch (refreshErr) {
           console.error(
             `[${new Date().toISOString()}] Silent refresh failed:`,
             refreshErr.message,
           );
+          setRefreshing(false);
           logout();
-          return Promise.reject(refreshErr); // ⬅️ important
+          return Promise.reject(refreshErr); // important
         }
       }
 

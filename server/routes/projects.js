@@ -307,7 +307,13 @@ router.post("/:id/claim", async (req, res) => {
     {
       _id: id,
       $or: [
-        { lyricist: null },
+        {
+          $or: [
+            { lyricist: null },
+            { lyricist: "" },
+            { lyricist: { $exists: false } },
+          ],
+        },
         { lyricist: username },
         { "lock.timestamp": { $lt: expired } },
       ],

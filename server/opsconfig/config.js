@@ -7,4 +7,4 @@ const config = {
   qaClaimMin: 20,
 };
 
-export default config;
+module.exports = config;

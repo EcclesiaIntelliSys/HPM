@@ -17,6 +17,7 @@ export default function LyricistProject() {
   const [loading, setLoading] = useState(true);
   const [lockedInfo, setLockedInfo] = useState(false);
   const [config, setConfig] = useState(null);
+  const [configLoaded, setConfigLoaded] = useState(false);
 
   const [newLogMessage, setNewLogMessage] = useState(""); // NEW: log input
   // const [timeLeft, setTimeLeft] = useState(20 * 60); // NEW: 20 min in seconds
@@ -51,14 +52,19 @@ export default function LyricistProject() {
   }
 
   useEffect(() => {
-    fetch("/api/client-config")
+    fetch(`${API_BASE}/api/opsconfig/client-config`)
       .then((res) => res.json())
-      .then((cfg) => setConfig(cfg));
+      .then((cfg) => {
+        setConfig(cfg);
+        setConfigLoaded(true);
+      })
+      .catch(() => setConfigLoaded(true));
   }, []);
+  console.log("CONFIG:" + config);
 
   // Countdown timer
   useEffect(() => {
-    if (!project?.lyricist_start) return;
+    if (!project?.lyricist_start || !config) return;
 
     const start = new Date(project.lyricist_start).getTime();
     const limit = config.projectMinLimit * 60;
@@ -70,19 +76,23 @@ export default function LyricistProject() {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [project?.lyricist_start]);
+  }, [project?.lyricist_start, config]);
 
   // Warn on refresh/close
   useEffect(() => {
     const handleBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = "";
+      if (token && !isSubmitted) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
     };
+
     window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, []);
+  }, [token, isSubmitted]);
 
   // Decode user from token
   useEffect(() => {
@@ -123,7 +133,7 @@ export default function LyricistProject() {
   }, [id, user]); //
 
   useEffect(() => {
-    if (!project || isSubmitted) return;
+    if (!project || isSubmitted || !config) return;
 
     const interval = setInterval(
       () => {
@@ -133,7 +143,7 @@ export default function LyricistProject() {
     ); //extend lock expiry every 2 minutes while my project session is open
 
     return () => clearInterval(interval);
-  }, [project]);
+  }, [project, config]);
 
   useEffect(() => {
     //display whatever previous lyricist have contributed.
@@ -275,7 +285,7 @@ export default function LyricistProject() {
     }
   }, [timeLeft, isSubmitted, project]);
 
-  if (loading) {
+  if (loading || !configLoaded) {
     return (
       <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-10 z-50">
         {" "}
@@ -292,7 +302,9 @@ export default function LyricistProject() {
   };
 
   // Calculate percentage remaining
-  const progressPercent = (timeLeft / (config.projectMinLimit * 60)) * 100;
+  const progressPercent = config
+    ? (timeLeft / (config.projectMinLimit * 60)) * 100
+    : 0;
 
   if (project) {
     return (

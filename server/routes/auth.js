@@ -5,6 +5,7 @@ const multer = require("multer");
 const User = require("../models/User"); // your user model
 const Voucher = require("../models/Voucher");
 const transporter = require("../utils/mailer");
+// const { cleanupOrphan } = require("../utils/cleanupOrphan");
 const { cleanupOrphan } = require("../utils/cleanupOrphan");
 
 const router = express.Router();
@@ -307,9 +308,9 @@ router.get("/refresh", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    cleanupOrphan().catch((err) => console.error("Cleanup error:", err));
-
     res.json({ token: newAccessToken });
+    // Run cleanup in background
+    cleanupOrphan().catch((err) => console.error("Cleanup error:", err));
     console.log("New refresh token issued: " + newRefreshToken);
   } catch (err) {
     console.error("Refresh error:", err);
