@@ -60,7 +60,7 @@ export default function LyricistProject() {
       })
       .catch(() => setConfigLoaded(true));
   }, []);
-  console.log("CONFIG:" + config);
+  // console.log("CONFIG:" + config);
 
   // Countdown timer
   useEffect(() => {

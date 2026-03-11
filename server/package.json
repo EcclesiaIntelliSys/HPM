@@ -18,7 +18,8 @@
     "mongoose": "^7.8.8",
     "multer": "^2.0.2",
     "my-music-app": "file:..",
-    "nodemailer": "^8.0.1"
+    "nodemailer": "^8.0.1",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

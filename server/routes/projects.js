@@ -8,6 +8,21 @@ const LOCK_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 // simple email validator
 const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
+/* ------------------ HELPERS ------------------ */
+// Emit updated lyricist queue to all clients
+const emitLyricistQueue = async (req) => {
+  try {
+    const io = req.app.get("io");
+    const count = await Project.countDocuments({
+      status: "Queued for Lyricist",
+    });
+    io.emit("lyricistQueueUpdated", { count });
+  } catch (err) {
+    console.error("emitLyricistQueue error:", err.message);
+  }
+};
+
+/* ------------------ ROUTES ------------------ */
 // POST /api/projects
 router.post("/", async (req, res) => {
   try {
@@ -177,7 +192,10 @@ router.post("/", async (req, res) => {
               <p><strong>HeartPrayerMusic Creatives Team</strong></p>
           `,
     });
-    return res
+    // emit updated queue
+    await emitLyricistQueue(req);
+
+    res
       .status(201)
       .json({ message: "Saved", id: project._id, songcode: project.songcode });
   } catch (err) {
@@ -247,6 +265,7 @@ router.put("/:id", async (req, res) => {
     });
 
     if (!project) return res.status(404).json({ error: "Project not found" });
+    await emitLyricistQueue(req);
     res.json(project);
   } catch (err) {
     console.error("PUT /api/projects/:id error", err);
@@ -259,6 +278,7 @@ router.delete("/:id", async (req, res) => {
   try {
     const project = await Project.findByIdAndDelete(req.params.id);
     if (!project) return res.status(404).json({ error: "Project not found" });
+    await emitLyricistQueue(req);
     res.json({ message: "Project deleted" });
   } catch (err) {
     console.error("DELETE /api/projects/:id error", err);
@@ -274,6 +294,8 @@ router.post("/assign-lyricist", async (req, res) => {
   );
 
   if (!project) return res.status(404).json({ error: "No projects in queue" });
+  // emit updated queue immediately after assignment
+  await emitLyricistQueue(req);
 
   res.json({ project });
 });
@@ -364,7 +386,8 @@ router.post("/:id/claim", async (req, res) => {
       lockTimestamp: lockedProject.lock.timestamp,
     });
   }
-
+  // emit updated queue after claim
+  await emitLyricistQueue(req);
   res.json(project);
 });
 

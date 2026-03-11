@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import axios from "axios";
 import Modal from "../components/Modal";
+import io from "socket.io-client";
 
 export default function WorkflowABC() {
   const [user, setUser] = useState(null);
@@ -13,6 +14,7 @@ export default function WorkflowABC() {
   const navigate = useNavigate();
   const { token, logout } = useContext(AuthContext);
   const API_BASE = process.env.REACT_APP_API_URL;
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
     if (!token) return;
@@ -23,6 +25,22 @@ export default function WorkflowABC() {
       setUser(null);
     }
   }, [token]);
+
+  // Connect to Socket.IO on mount
+  useEffect(() => {
+    const newSocket = io(API_BASE, { withCredentials: true });
+    setSocket(newSocket);
+
+    // Listen for lyricist queue updates
+    newSocket.on("lyricistQueueUpdated", (data) => {
+      console.log("Queue update received:", data);
+      setLyricistQueueCount(data.count);
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [API_BASE]);
 
   // Fetch queue count
   useEffect(() => {
@@ -39,7 +57,7 @@ export default function WorkflowABC() {
     fetchLyricistQueueCount();
   }, [API_BASE]);
   const handleLyricistClick = () => {
-    if (queueCount > 0) {
+    if (lyricistQueueCount > 0) {
       setShowLyricistModal(true);
     }
   };
@@ -111,7 +129,7 @@ export default function WorkflowABC() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <button
-              onClick={() => setShowLyricistModal(true)}
+              onClick={handleLyricistClick}
               className={`${boxClass} ${bit1 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
               disabled={bit1 !== "1" || lyricistQueueCount === 0}
             >
