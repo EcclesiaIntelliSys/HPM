@@ -1,37 +1,34 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
-// import { useParams, useNavigate, useBlocker } from "react-router-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 import Modal from "../components/Modal";
 import api from "../api/api";
 import Themes from "../components/Themes";
-const currentTheme = Themes.lyricist;
-export default function LyricistProject() {
+const currentTheme = Themes.qa;
+
+export default function QualityassuranceProject() {
   const [user, setUser] = useState(null);
   const [bit1, bit2, bit3, bit4, bit5, bit6] = user?.role || [];
   const { id } = useParams();
   const { token } = useContext(AuthContext);
   const [project, setProject] = useState(null);
-  const [songTitle, setSongTitle] = useState("");
+  const [dispo, setDispo] = useState("");
+  const [dispo_remarks, setDispo_remarks] = useState("");
   const timerRef = useRef(null);
 
-  const [Lyrics, setLyrics] = useState("");
   const [loading, setLoading] = useState(true);
   const [lockedInfo, setLockedInfo] = useState(false);
   const [config, setConfig] = useState(null);
   const [configLoaded, setConfigLoaded] = useState(false);
 
-  const [newLogMessage, setNewLogMessage] = useState(""); // NEW: log input
-  // const [timeLeft, setTimeLeft] = useState(20 * 60); // NEW: 20 min in seconds
+  const [newLogMessage, setNewLogMessage] = useState("");
   const [timeLeft, setTimeLeft] = useState(null);
   const navigate = useNavigate();
-  // const [startTime] = useState(() => Date.now());
   const [isSubmitted, setIsSubmitted] = useState(false);
   const claimedRef = useRef(false);
 
   //modal constants
-  // const [showWarningModal, setShowWarningModal] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showAckModal, setShowAckModal] = useState(false);
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
@@ -40,9 +37,11 @@ export default function LyricistProject() {
   const [savingProgress, setSavingProgress] = useState(false);
   const [submittingProject, setSubmittingProject] = useState(false);
 
-  const API_BASE = process.env.REACT_APP_API_URL;
+  //states for audio file playback
 
-  // const blocker = useBlocker(!isSubmitted);
+  const [audioLoaded, setAudioLoaded] = useState(false);
+
+  const API_BASE = process.env.REACT_APP_API_URL;
 
   function timeAgo(date) {
     const diff = Math.floor((Date.now() - new Date(date)) / 60000);
@@ -68,10 +67,10 @@ export default function LyricistProject() {
 
   // Countdown timer
   useEffect(() => {
-    if (!project?.lyricist_start || !config) return;
+    if (!project?.assessor_start || !config) return;
 
-    const start = new Date(project.lyricist_start).getTime();
-    const limit = config.lyricistWorkMin * 60;
+    const start = new Date(project.assessor_start).getTime();
+    const limit = config.qaWorkMin * 60;
 
     timerRef.current = setInterval(() => {
       const elapsed = Math.floor((Date.now() - start) / 1000);
@@ -80,7 +79,7 @@ export default function LyricistProject() {
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [project?.lyricist_start, config]);
+  }, [project?.assessor_start, config]);
 
   // Warn on refresh/close
   useEffect(() => {
@@ -116,7 +115,7 @@ export default function LyricistProject() {
     const claimProject = async () => {
       try {
         const res = await axios.post(
-          `${API_BASE}/api/projectsmanage/${id}/lyricistclaim`,
+          `${API_BASE}/api/projectsmanage/${id}/qaclaim`,
           { username: user.username },
           {
             headers: { Authorization: `Bearer ${token}` },
@@ -150,10 +149,10 @@ export default function LyricistProject() {
   }, [project, config]);
 
   useEffect(() => {
-    //display whatever previous lyricist have contributed.
+    //display whatever previous Song Artist have contributed.
     if (project) {
-      setSongTitle(project.songtitle || "");
-      setLyrics(project.lyrics || "");
+      setDispo(project.dispo || "");
+      setDispo_remarks(project.dispo_remarks || "");
     }
   }, [project]);
 
@@ -185,10 +184,14 @@ export default function LyricistProject() {
       setSavingProgress(true);
       await axios.put(
         `${API_BASE}/api/projectsmanage/${id}`,
-        { songtitle: songTitle, lyrics: Lyrics },
+        { dispo, dispo_remarks },
         { headers: { Authorization: `Bearer ${token}` } },
       );
-      setProject((prev) => ({ ...prev, songtitle: songTitle, lyrics: Lyrics }));
+      setProject((prev) => ({
+        ...prev,
+        dispo,
+        dispo_remarks,
+      }));
     } catch (err) {
       console.error("Error saving progress:", err);
     } finally {
@@ -201,27 +204,32 @@ export default function LyricistProject() {
       setShowSubmitModal(false);
       setSubmittingProject(true);
 
-      const lyricistEnd = new Date().toISOString(); // Save project fields
+      const assessorEnd = new Date().toISOString(); // Save project fields
       await axios.put(
         `${API_BASE}/api/projectsmanage/${id}`,
         {
-          songtitle: songTitle,
-          lyrics: Lyrics,
-          lyricist: user?.username,
-          lyricist_end: lyricistEnd,
-          status: "Queued for Song Artist",
-          lock: { _id: null, user: null, timestamp: null },
+          dispo,
+          dispo_remarks,
+          assessor: user?.username,
+          assessor_end: assessorEnd,
+          status: "Queued for Admin Review and Action",
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
-
       clearInterval(timerRef.current);
       setIsSubmitted(true);
       // Add log entry
+      const message =
+        dispo === "Approve"
+          ? "Song APPROVED. Submitted Assessment for Admin Review and Action"
+          : dispo === "Reject"
+            ? "Song REJECTED. Submitted Assessment for Admin Review and Action"
+            : "Submitted Assessment for Admin Review and Action";
+
       const logEntry = {
-        timestamp: lyricistEnd,
+        timestamp: assessorEnd,
         actor: user?.username || "Unknown",
-        message: "Submitted Project Lyrics",
+        message,
       };
       await axios.post(`${API_BASE}/api/projectsmanage/${id}/logs`, logEntry, {
         headers: { Authorization: `Bearer ${token}` },
@@ -231,12 +239,12 @@ export default function LyricistProject() {
         `${API_BASE}/api/clockify`,
         {
           resource: user?.username,
-          service: "Lyrics Creation",
+          service: "Song Assessment",
           songcode: project.songcode,
-          start: project.lyricist_start,
-          end: lyricistEnd,
+          start: project.assessor_start,
+          end: assessorEnd,
           hours_rendered:
-            (new Date(lyricistEnd) - new Date(project.lyricist_start)) /
+            (new Date(assessorEnd) - new Date(project.assessor_start)) /
             (1000 * 60 * 60),
         },
         { headers: { Authorization: `Bearer ${token}` } },
@@ -258,16 +266,16 @@ export default function LyricistProject() {
           timestamp: new Date().toISOString(),
           actor: "SYSTEM",
           message:
-            "Lyricist process timed-out. Project placed back in to the Lyricist queue.",
+            "Quality Assurance process timed-out. Project placed back in to the Quality Assurance queue.",
         };
 
         try {
           await axios.put(
             `${API_BASE}/api/projectsmanage/${id}`,
             {
-              lyricist: null,
-              lyricist_start: null,
-              status: "Queued for Lyricist",
+              assessor: null,
+              assessor_start: null,
+              status: "Queued for Quality Assurance",
               lock: { _id: null, user: null, timestamp: null },
             },
             { headers: { Authorization: `Bearer ${token}` } },
@@ -310,10 +318,19 @@ export default function LyricistProject() {
 
   // Calculate percentage remaining
   const progressPercent = config
-    ? (timeLeft / (config.lyricistWorkMin * 60)) * 100
+    ? (timeLeft / (config.qaWorkMin * 60)) * 100
     : 0;
 
-  if (project && bit1 === "1") {
+  // Consts and effects for Audio
+
+  const R2_PUBLIC = process.env.REACT_APP_R2_PUBLIC_URL;
+
+  const audioSrc = project?.filename
+    ? `${R2_PUBLIC}/${encodeURIComponent(project.filename)}`
+    : null;
+
+  // Start Render here
+  if (project && bit3 === "1") {
     return (
       <main className="max-w-4xl mx-auto p-6 font-montserrat">
         {/* Timer */}
@@ -321,7 +338,7 @@ export default function LyricistProject() {
           {/* Timer text with conditional color */}
           <div
             className={`font-bold text-lg ${
-              timeLeft <= 0.2 * config.lyricistWorkMin * 60
+              timeLeft <= 0.2 * config.qaWorkMin * 60
                 ? "text-red-700"
                 : "text-green-700"
             }`}
@@ -333,7 +350,7 @@ export default function LyricistProject() {
           <div className="w-full bg-gray-300 rounded h-3 mt-2">
             <div
               className={`${
-                timeLeft <= 0.2 * config.lyricistWorkMin * 60
+                timeLeft <= 0.2 * config.qaWorkMin * 60
                   ? "bg-red-600"
                   : "bg-green-600"
               } h-3 rounded transition-all duration-500`}
@@ -363,7 +380,7 @@ export default function LyricistProject() {
         <h2
           className={`text-2xl font-bold mb-4 text-center ${currentTheme.header}`}
         >
-          Lyricist Project: {project.songcode}
+          Quality Assurance Project: {project.songcode}
         </h2>
 
         {/* Song Details */}
@@ -376,10 +393,17 @@ export default function LyricistProject() {
             </div>
             <div>
               <span className="font-semibold text-red-900">
-                Assigned Lyricist:
+                Title and Lyrics by:
               </span>{" "}
               {project.lyricist}
             </div>
+            <div>
+              <span className="font-semibold text-red-900">
+                Assigned Song Artist:
+              </span>{" "}
+              {project.songartist}
+            </div>
+            <div>{""}</div>
             <div>
               <span className="font-semibold text-red-900">Relation:</span>{" "}
               {project.relation}
@@ -426,6 +450,30 @@ export default function LyricistProject() {
                 ? new Date(project.targetdate).toLocaleDateString()
                 : "N/A"}
             </div>
+
+            <div>
+              <span className="font-semibold text-red-900">Song Title:</span>{" "}
+              {project.songtitle}
+            </div>
+            <div></div>
+            <div>
+              <span className="font-semibold text-red-900">Lyrics:</span>{" "}
+              {project.lyrics}
+            </div>
+            <div></div>
+            <div>
+              <span className="font-semibold text-red-900">
+                Song Title (Revised):
+              </span>{" "}
+              {project.songtitlerev || "N/A"}
+            </div>
+            <div></div>
+            <div>
+              <span className="font-semibold text-red-900">
+                Lyrics (Revised):
+              </span>{" "}
+              {project.lyricsrev || "N/A"}
+            </div>
           </div>
         </div>
 
@@ -460,33 +508,60 @@ export default function LyricistProject() {
           </div>
         </div>
 
-        {/* Lyrics Workspace */}
+        {/* Quality Assurance Workspace */}
         <div className={`${currentTheme.box}`}>
-          <h3 className="text-lg font-semibold mb-2">Lyricist Workspace</h3>
+          <h3 className="text-lg font-semibold mb-2">
+            Quality Assurance Workspace
+          </h3>
 
-          {/* NEW: Song Title */}
-          <input
-            type="text"
-            value={songTitle}
-            onChange={(e) => setSongTitle(e.target.value)}
-            placeholder="Enter song title..."
-            className="w-full border p-2 mb-4"
-          />
+          {/* Audio Playback */}
+          <div className="mt-4">
+            <label className="font-semibold">{project.filename}</label>
+
+            {audioSrc && (
+              <div className="mt-3">
+                <audio
+                  controls
+                  src={audioSrc}
+                  className="w-full"
+                  onCanPlayThrough={() => setAudioLoaded(true)}
+                />
+              </div>
+            )}
+          </div>
+          <hr />
+          <br />
+          <select
+            value={dispo}
+            onChange={(e) => setDispo(e.target.value)}
+            className={`w-1/3 border p-2 mb-4 text-sm ${
+              dispo === "Approve"
+                ? "text-green-700"
+                : dispo === "Reject"
+                  ? "text-red-700"
+                  : ""
+            }`}
+          >
+            <option value="">Select Disposition</option>
+            <option value="Approve">Approve</option>
+            <option value="Reject">Reject</option>
+          </select>
 
           <textarea
             type="text"
-            value={Lyrics}
-            onChange={(e) => setLyrics(e.target.value)}
+            value={dispo_remarks}
+            onChange={(e) => setDispo_remarks(e.target.value)}
             className="w-full h-40 border p-2 text-sm"
-            placeholder="Write your lyrics here..."
+            placeholder="Input Your Justification"
           />
+
           {/* Save Progress */}
           <button
             onClick={handleSaveProgress}
-            disabled={!songTitle && !Lyrics}
+            disabled={!dispo && !dispo_remarks}
             className={`relative inline-flex items-center justify-center text-sm mt-4 px-4 py-2 rounded ml-2 min-w-[140px] 
             ${
-              !songTitle && !Lyrics
+              !dispo && !dispo_remarks
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-green-600 text-white hover:bg-green-700"
             }`}
@@ -502,18 +577,17 @@ export default function LyricistProject() {
           {/* Submit Project */}
           <button
             onClick={() => setShowSubmitModal(true)}
-            disabled={!songTitle || !Lyrics}
+            disabled={!dispo || !dispo_remarks || !audioLoaded} // <-- add audioLoaded
             className={`relative inline-flex items-center justify-center text-sm mt-4 px-4 py-2 rounded ml-2 min-w-[140px] 
-            ${
-              !songTitle || !Lyrics
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                : "bg-purple-600 text-white hover:bg-purple-700"
-            }`}
+    ${
+      !dispo || !dispo_remarks || !audioLoaded
+        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+        : "bg-purple-600 text-white hover:bg-purple-700"
+    }`}
           >
             {submittingProject && (
               <span className="absolute left-4 animate-spin rounded-full w-4 h-4 border-t-2 border-white" />
             )}
-
             <span className={submittingProject ? "ml-6" : ""}>
               {submittingProject ? "Submitting..." : "Submit Project"}
             </span>
@@ -527,8 +601,8 @@ export default function LyricistProject() {
             >
               <h2>Confirm Submission:</h2>
               <p>
-                Upon submission, the project will be queued to a Song Artist.
-                Are you sure you want to submit your lyrics?
+                Upon submission, the project will be queued for Admin review and
+                action. Are you sure you want to submit your assessment?
               </p>
               <div className="flex gap-4 mt-4 justify-center">
                 <button
@@ -557,7 +631,7 @@ export default function LyricistProject() {
               hideDefaultClose={true}
             >
               <h2>Submission Successful</h2>
-              <p>Your lyrics have been submitted successfully.</p>
+              <p>Your project assessment has been submitted successfully.</p>
               <div className="flex justify-center">
                 <button
                   onClick={() => {
@@ -584,7 +658,8 @@ export default function LyricistProject() {
               <h2>Time Limit Exceeded</h2>
               <p>
                 You have exceeded the allotted time to complete this project.
-                This project has been placed back in to the Lyricist queue.
+                This project has been placed back in to the Quality Assurance
+                queue.
               </p>
 
               <div className="flex justify-center">
@@ -613,12 +688,12 @@ export default function LyricistProject() {
           hideDefaultClose={true}
         >
           <h2>Sorry</h2>
-          {bit1 !== "1" ? (
+          {bit3 !== "1" ? (
             <p>You are not authorized to perform this operation.</p>
           ) : (
             <p>
               Project not found or project is currently not available for
-              Lyricist operation.
+              Quality Assurance operation.
             </p>
           )}
           <div className="flex justify-center">

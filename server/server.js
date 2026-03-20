@@ -20,6 +20,11 @@ const projectsRoutes = require("./routes/projects");
 const clockifyRoutes = require("./routes/clockify");
 const opsconfigRoutes = require("./routes/opsconfig");
 const { cleanupOrphan } = require("./utils/cleanupOrphan");
+const {
+  emitLyricistQueue,
+  emitSAQueue,
+  emitQAQueue,
+} = require("./utils/queueEmitter");
 const auth = require("./middleware/auth");
 
 const app = express();
@@ -113,6 +118,13 @@ server.listen(PORT, () => {
 });
 
 /* -------------------- Cleanup Orphaned Locks -------------------- */
-setInterval(() => {
-  cleanupOrphan();
-}, 60000); // every 1 minute
+setInterval(async () => {
+  console.log("server started orphan project cleanup");
+  await cleanupOrphan();
+
+  const io = app.get("io");
+
+  await emitLyricistQueue(io);
+  await emitSAQueue(io);
+  await emitQAQueue(io);
+}, 60000);

@@ -25,7 +25,7 @@ async function requeueProjects({
 }) {
   const expiry = new Date(Date.now() - claimMinutes * 60 * 1000);
   const now = new Date();
-
+  console.log("Requeing projects");
   const result = await Project.updateMany(
     {
       status,
@@ -56,6 +56,7 @@ async function requeueProjects({
  */
 async function cleanupOrphan() {
   if (cleanupRunning) return;
+  console.log("Cleaning up orphan projects.");
   cleanupRunning = true;
 
   try {

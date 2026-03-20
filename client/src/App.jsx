@@ -18,6 +18,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RegisterForm from "./components/RegisterForm";
 import VerifyPage from "./components/VerifyPage";
 import LyricistProject from "./components/LyricistProject";
+import SongartistProject from "./components/SongartistProject";
+import QualityassuranceProject from "./components/QualityassuranceProject";
 import { useNavigate } from "react-router-dom";
 
 export default function App() {
@@ -114,6 +116,22 @@ export default function App() {
       element: (
         <ProtectedRoute>
           <LyricistProject />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/songartist/:id",
+      element: (
+        <ProtectedRoute>
+          <SongartistProject />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/qualityassurance/:id",
+      element: (
+        <ProtectedRoute>
+          <QualityassuranceProject />
         </ProtectedRoute>
       ),
     },

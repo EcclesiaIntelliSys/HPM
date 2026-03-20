@@ -61,6 +61,10 @@ const ProjectSchema = new mongoose.Schema(
     voucherNo: { type: String },
     songtitle: { type: String },
     lyrics: { type: String },
+    songtitlerev: { type: String },
+    lyricsrev: { type: String },
+    dispo: { type: String },
+    dispo_remarks: { type: String },
     lock: {
       user: String,
       timestamp: Date,

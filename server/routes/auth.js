@@ -161,7 +161,7 @@ router.post("/register", upload.single("profilePicture"), async (req, res) => {
     // ✅ Send verification email
     const verifyUrl = `${process.env.FRONTEND_URL}/verify/${verificationToken}`;
     await transporter.sendMail({
-      from: process.env.TITAN_USER,
+      from: process.env.TITAN_FROM,
       to: email,
       subject: "Verify Your HeartPrayerMusic Artist Account Registration",
       html: ` <h2>Welcome to <strong>HeartPrayerMusic</strong>, ${firstname}!</h2> <p>Please verify your email by clicking the link below:</p> <a href="${verifyUrl}">Verify Email</a> `,
