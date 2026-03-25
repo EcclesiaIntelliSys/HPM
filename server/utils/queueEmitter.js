@@ -36,8 +36,36 @@ const emitQAQueue = async (io) => {
   }
 };
 
+const emitPendingQueue = async (io) => {
+  try {
+    const sockets = await io.fetchSockets();
+
+    const usernames = new Set();
+
+    // collect all joined usernames (rooms)
+    sockets.forEach((socket) => {
+      socket.rooms.forEach((room) => {
+        if (room !== socket.id) {
+          usernames.add(room);
+        }
+      });
+    });
+
+    for (const username of usernames) {
+      const count = await Project.countDocuments({
+        "lock.user": username,
+        status: / - WIP$/i, // improved regex
+      });
+
+      io.to(username).emit("pendingQueueUpdated", { count });
+    }
+  } catch (err) {
+    console.error("emitPendingQueue error:", err.message);
+  }
+};
 module.exports = {
   emitLyricistQueue,
   emitSAQueue,
   emitQAQueue,
+  emitPendingQueue,
 };

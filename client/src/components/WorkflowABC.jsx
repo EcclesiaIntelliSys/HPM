@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 // import axios from "axios";
+import api from "../api/api";
 import Modal from "../components/Modal";
 // import io from "socket.io-client";
 import { useSocket } from "../context/SocketContext";
@@ -243,7 +244,7 @@ export default function WorkflowABC() {
     }
   };
   const handleQACancel = () => {
-    setShowSAModal(false);
+    setShowQAModal(false);
   };
 
   // Generic Artist Effects
@@ -251,20 +252,30 @@ export default function WorkflowABC() {
   useEffect(() => {
     const fetchPendingQueueCount = async () => {
       try {
-        const res = await api.get("/api/projectsmanage/count", {
-          params: {
-            "lock.user": user.username,
-            status_contains: "WIP",
+        console.log(
+          `Fetching pending count for ${user?.username} (current: ${pendingQueueCount})`,
+        );
+
+        const res = await api.get(
+          `${API_BASE}/api/projectsmanage/countPendingByuser`,
+          {
+            params: {
+              "lock.user": user?.username,
+              status_contains: "WIP",
+            },
           },
-        });
+        );
 
         setPendingQueueCount(res.data.count);
       } catch (err) {
         console.error("Error fetching queue count:", err);
       }
     };
-    fetchPendingQueueCount();
-  }, [API_BASE]);
+
+    if (user?.username) {
+      fetchPendingQueueCount();
+    }
+  }, [API_BASE, user?.username]);
 
   const boxClass =
     "p-4 bg-sand-50 shadow text-center hover:bg-green-200 focus:outline-none text-black";
@@ -362,7 +373,7 @@ export default function WorkflowABC() {
             </button>
 
             <button
-              onClick={handleClockifyClick}
+              onClick={() => navigate("/artistpending")}
               className={`${boxClass} ${bit1 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
               disabled={clockifyQueueCount === 0}
             >

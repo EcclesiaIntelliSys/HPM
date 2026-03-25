@@ -24,6 +24,7 @@ const {
   emitLyricistQueue,
   emitSAQueue,
   emitQAQueue,
+  emitPendingQueue,
 } = require("./utils/queueEmitter");
 const auth = require("./middleware/auth");
 
@@ -106,6 +107,14 @@ app.set("io", io);
 io.on("connection", (socket) => {
   console.log("Client connected:", socket.id);
 
+  // join per-user room
+  socket.on("joinUserRoom", (username) => {
+    if (username) {
+      socket.join(username);
+      console.log(`Socket ${socket.id} joined room for user ${username}`);
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });
@@ -127,4 +136,5 @@ setInterval(async () => {
   await emitLyricistQueue(io);
   await emitSAQueue(io);
   await emitQAQueue(io);
+  await emitPendingQueue(io);
 }, 60000);

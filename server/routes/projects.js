@@ -55,12 +55,28 @@ const emitQAQueue = async (req) => {
 const emitPendingQueue = async (req) => {
   try {
     const io = req.app.get("io");
-    const count = await Project.countDocuments({
-      status: "Queued for Quality Assurance",
+
+    const sockets = await io.fetchSockets();
+    const usernames = new Set();
+
+    sockets.forEach((socket) => {
+      socket.rooms.forEach((room) => {
+        if (room !== socket.id) {
+          usernames.add(room);
+        }
+      });
     });
-    io.emit("qaQueueUpdated", { count });
+
+    for (const username of usernames) {
+      const count = await Project.countDocuments({
+        "lock.user": username,
+        status: { $regex: " - WIP$", $options: "i" },
+      });
+
+      io.to(username).emit("pendingQueueUpdated", { count });
+    }
   } catch (err) {
-    console.error("emitQAQueue error:", err.message);
+    console.error("emitPendingQueue error:", err.message);
   }
 };
 
@@ -281,11 +297,20 @@ router.get("/", async (req, res) => {
       songcode,
       fromDate,
       toDate,
+      status_contains,
     } = req.query;
+
+    const lockUser = req.query["lock.user"];
 
     let filter = {};
 
-    if (status) filter.status = status;
+    if (status && !status_contains) filter.status = status;
+
+    if (status_contains) {
+      filter.status = { $regex: status_contains, $options: "i" };
+    }
+
+    if (lockUser) filter["lock.user"] = lockUser;
     if (songartist) filter.songartist = songartist;
     if (assessor) filter.assessor = assessor;
     if (lyricist) filter.lyricist = lyricist;
@@ -296,6 +321,7 @@ router.get("/", async (req, res) => {
       filter.createdAt = {};
       if (fromDate) filter.createdAt.$gte = new Date(fromDate);
       if (toDate) filter.createdAt.$lte = new Date(toDate);
+      if (Object.keys(filter.createdAt).length === 0) delete filter.createdAt;
     }
 
     const projects = await Project.find(filter).sort({ createdAt: -1 });
@@ -312,6 +338,34 @@ router.get("/count", async (req, res) => {
   try {
     const { status } = req.query;
     const count = await Project.countDocuments({ status });
+    res.json({ count });
+  } catch (err) {
+    console.error("Count error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /api/projects count pending by user
+router.get("/countPendingByuser", async (req, res) => {
+  try {
+    const lockUser = req.query["lock.user"];
+    const statusContains = req.query.status_contains;
+
+    const query = {};
+
+    if (lockUser) {
+      query["lock.user"] = lockUser;
+    }
+
+    if (statusContains) {
+      query.status = {
+        $regex: ` - ${statusContains}$`, // ensures it ends with " - WIP"
+        $options: "i",
+      };
+    }
+
+    const count = await Project.countDocuments(query);
+
     res.json({ count });
   } catch (err) {
     console.error("Count error:", err);
@@ -387,6 +441,7 @@ router.put("/:id", async (req, res) => {
     await emitLyricistQueue(req);
     await emitSAQueue(req);
     await emitQAQueue(req);
+    await emitPendingQueue(req);
 
     res.json(project);
   } catch (err) {
@@ -403,6 +458,7 @@ router.delete("/:id", async (req, res) => {
     await emitLyricistQueue(req);
     await emitSAQueue(req);
     await emitQAQueue(req);
+    await emitPendingQueue(req);
     res.json({ message: "Project deleted" });
   } catch (err) {
     console.error("DELETE /api/projects/:id error", err);
@@ -419,7 +475,6 @@ router.post("/assign-lyricist", async (req, res) => {
 
   if (!project) return res.status(404).json({ error: "No projects in queue" });
   // emit updated queue immediately after assignment
-  await emitLyricistQueue(req);
 
   res.json({ project });
 });
@@ -494,6 +549,7 @@ router.post("/:id/lyricistclaim", async (req, res) => {
   }
   // emit updated queue after claim
   await emitLyricistQueue(req);
+  await emitPendingQueue(req);
   res.json(project);
 });
 
@@ -508,7 +564,6 @@ router.post("/assign-sa", async (req, res) => {
 
   if (!project) return res.status(404).json({ error: "No projects in queue" });
   // emit updated queue immediately after assignment
-  await emitSAQueue(req);
 
   res.json({ project });
 });
@@ -583,6 +638,7 @@ router.post("/:id/saclaim", async (req, res) => {
   }
   // emit updated queue after claim
   await emitSAQueue(req);
+  await emitPendingQueue(req);
   res.json(project);
 });
 
@@ -643,7 +699,6 @@ router.post("/assign-qa", async (req, res) => {
 
   if (!project) return res.status(404).json({ error: "No projects in queue" });
   // emit updated queue immediately after assignment
-  await emitQAQueue(req);
 
   res.json({ project });
 });
@@ -718,51 +773,11 @@ router.post("/:id/qaclaim", async (req, res) => {
   }
   // emit updated queue after claim
   await emitQAQueue(req);
+  await emitPendingQueue(req);
   res.json(project);
 });
 
-router.post("/:id/upload-audio", upload.single("audio"), async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-    if (!project) {
-      return res.status(404).json({ error: "Project not found" });
-    }
-
-    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-
-    let audioBuffer = req.file.buffer;
-
-    // Convert if not mp3
-    if (req.file.mimetype !== "audio/mpeg") {
-      audioBuffer = await convertToMp3(audioBuffer);
-    }
-
-    const title = project.songtitlerev || project.songtitle || "Song";
-
-    const filename = `${title} - ${project.songcode}.mp3`
-      .replace(/[^\w\s\-\.]/g, "")
-      .replace(/\s+/g, "_");
-
-    await r2.send(
-      new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET,
-        Key: filename,
-        Body: audioBuffer,
-        ContentType: "audio/mpeg",
-      }),
-    );
-
-    project.filename = filename;
-    await project.save();
-
-    res.json({ filename });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Upload failed" });
-  }
-});
-
-// END - SONG ARTIST ROUTES
+// END - QUALITY ASSURANCE ROUTES
 
 //Add a log entry to a project
 router.post("/:id/logs", async (req, res) => {

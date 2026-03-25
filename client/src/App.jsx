@@ -20,6 +20,7 @@ import VerifyPage from "./components/VerifyPage";
 import LyricistProject from "./components/LyricistProject";
 import SongartistProject from "./components/SongartistProject";
 import QualityassuranceProject from "./components/QualityassuranceProject";
+import ArtistPending from "./components/ArtistPending";
 import { useNavigate } from "react-router-dom";
 
 export default function App() {
@@ -132,6 +133,14 @@ export default function App() {
       element: (
         <ProtectedRoute>
           <QualityassuranceProject />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/artistpending",
+      element: (
+        <ProtectedRoute>
+          <ArtistPending />
         </ProtectedRoute>
       ),
     },
