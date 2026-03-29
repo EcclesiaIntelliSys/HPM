@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const Project = require("../models/Project");
 const Voucher = require("../models/Voucher");
+const Clockify = require("../models/Clockify");
+
 const transporter = require("../utils/mailer");
 const LOCK_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
@@ -68,39 +70,28 @@ const emitPendingQueue = async (req) => {
     });
 
     for (const username of usernames) {
-      const count = await Project.countDocuments({
-        "lock.user": username,
-        status: { $regex: " - WIP$", $options: "i" },
-      });
+      const [count, countClockify, countClockifyPaid] = await Promise.all([
+        Project.countDocuments({
+          "lock.user": username,
+          status: / - WIP$/i,
+        }),
+        Clockify.countDocuments({
+          resource: username,
+        }),
+        Clockify.countDocuments({
+          resource: username,
+          payflag: true,
+        }),
+      ]);
 
-      io.to(username).emit("pendingQueueUpdated", { count });
+      io.to(username).emit("pendingQueueUpdated", {
+        count,
+        countClockify,
+        countClockifyPaid,
+      });
     }
   } catch (err) {
     console.error("emitPendingQueue error:", err.message);
-  }
-};
-
-const emitClockifyQueue = async (req) => {
-  try {
-    const io = req.app.get("io");
-    const count = await Project.countDocuments({
-      status: "Queued for Quality Assurance",
-    });
-    io.emit("qaQueueUpdated", { count });
-  } catch (err) {
-    console.error("emitQAQueue error:", err.message);
-  }
-};
-
-const emitClockifyPaidQueue = async (req) => {
-  try {
-    const io = req.app.get("io");
-    const count = await Project.countDocuments({
-      status: "Queued for Quality Assurance",
-    });
-    io.emit("qaQueueUpdated", { count });
-  } catch (err) {
-    console.error("emitQAQueue error:", err.message);
   }
 };
 
@@ -364,9 +355,18 @@ router.get("/countPendingByuser", async (req, res) => {
       };
     }
 
-    const count = await Project.countDocuments(query);
+    const [count, countClockify, countClockifyPaid] = await Promise.all([
+      Project.countDocuments(query),
+      Clockify.countDocuments({
+        resource: lockUser,
+      }),
+      Clockify.countDocuments({
+        resource: lockUser,
+        payflag: true,
+      }),
+    ]);
 
-    res.json({ count });
+    res.json({ count, countClockify, countClockifyPaid });
   } catch (err) {
     console.error("Count error:", err);
     res.status(500).json({ error: "Server error" });

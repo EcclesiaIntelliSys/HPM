@@ -8,6 +8,8 @@ const clockifySchema = new mongoose.Schema(
     start: Date,
     end: Date,
     hours_rendered: Number,
+    txnref: String,
+    payflag: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

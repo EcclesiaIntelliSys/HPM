@@ -83,32 +83,20 @@ export default function WorkflowABC() {
     const handlePendingQueue = (data) => {
       console.log("Pending projects queue update received:", data);
       setPendingQueueCount(data.count);
-    };
-
-    const handleClockifyQueue = (data) => {
-      console.log("Clockify items update received:", data);
-      setClockifyQueueCount(data.count);
-    };
-
-    const handleClockifyPaidQueue = (data) => {
-      console.log("Clockify pending items update received:", data);
-      setClockifyPaidgQueueCount(data.count);
+      setClockifyQueueCount(data.countClockify);
+      setClockifyPaidQueueCount(data.countClockifyPaid);
     };
 
     socket.on("lyricistQueueUpdated", handleLyricistQueue);
     socket.on("saQueueUpdated", handleSAQueue);
     socket.on("qaQueueUpdated", handleQAQueue);
     socket.on("pendingQueueUpdated", handlePendingQueue);
-    socket.on("clockifyQueueUpdated", handleClockifyQueue);
-    socket.on("clockifyPaidQueueUpdated", handleClockifyPaidQueue);
 
     return () => {
       socket.off("lyricistQueueUpdated", handleLyricistQueue);
       socket.off("saQueueUpdated", handleSAQueue);
       socket.off("qaQueueUpdated", handleQAQueue);
       socket.off("pendingQueueUpdated", handlePendingQueue);
-      socket.off("clockifyQueueUpdated", handleClockifyQueue);
-      socket.off("clockifyPaidQueueUpdated", handleClockifyPaidQueue);
     };
   }, [socket]);
 
@@ -267,6 +255,8 @@ export default function WorkflowABC() {
         );
 
         setPendingQueueCount(res.data.count);
+        setClockifyQueueCount(res.data.countClockify);
+        setClockifyPaidQueueCount(res.data.countClockifyPaid);
       } catch (err) {
         console.error("Error fetching queue count:", err);
       }
@@ -373,7 +363,7 @@ export default function WorkflowABC() {
             </button>
 
             <button
-              onClick={() => navigate("/artistpending")}
+              onClick={() => navigate("/artistclockify")}
               className={`${boxClass} ${bit1 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
               disabled={clockifyQueueCount === 0}
             >

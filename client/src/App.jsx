@@ -21,6 +21,7 @@ import LyricistProject from "./components/LyricistProject";
 import SongartistProject from "./components/SongartistProject";
 import QualityassuranceProject from "./components/QualityassuranceProject";
 import ArtistPending from "./components/ArtistPending";
+import ArtistClockify from "./components/ArtistClockify";
 import { useNavigate } from "react-router-dom";
 
 export default function App() {
@@ -141,6 +142,14 @@ export default function App() {
       element: (
         <ProtectedRoute>
           <ArtistPending />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/artistclockify",
+      element: (
+        <ProtectedRoute>
+          <ArtistClockify />
         </ProtectedRoute>
       ),
     },

@@ -1,4 +1,5 @@
 const Project = require("../models/Project");
+const Clockify = require("../models/Clockify");
 
 const emitLyricistQueue = async (io) => {
   try {
@@ -52,17 +53,31 @@ const emitPendingQueue = async (io) => {
     });
 
     for (const username of usernames) {
-      const count = await Project.countDocuments({
-        "lock.user": username,
-        status: / - WIP$/i, // improved regex
-      });
+      const [count, countClockify, countClockifyPaid] = await Promise.all([
+        Project.countDocuments({
+          "lock.user": username,
+          status: / - WIP$/i,
+        }),
+        Clockify.countDocuments({
+          resource: username,
+        }),
+        Clockify.countDocuments({
+          resource: username,
+          payflag: true,
+        }),
+      ]);
 
-      io.to(username).emit("pendingQueueUpdated", { count });
+      io.to(username).emit("pendingQueueUpdated", {
+        count,
+        countClockify,
+        countClockifyPaid,
+      });
     }
   } catch (err) {
     console.error("emitPendingQueue error:", err.message);
   }
 };
+
 module.exports = {
   emitLyricistQueue,
   emitSAQueue,
