@@ -53,22 +53,27 @@ const emitPendingQueue = async (io) => {
     });
 
     for (const username of usernames) {
-      const [count, countClockify, countClockifyPaid] = await Promise.all([
-        Project.countDocuments({
-          "lock.user": username,
-          status: / - WIP$/i,
-        }),
-        Clockify.countDocuments({
-          resource: username,
-        }),
-        Clockify.countDocuments({
-          resource: username,
-          payflag: true,
-        }),
-      ]);
+      const [count, countAdmin, countClockify, countClockifyPaid] =
+        await Promise.all([
+          Project.countDocuments({
+            "lock.user": username,
+            status: / - WIP$/i,
+          }),
+          Project.countDocuments({
+            status: "Queued for Admin Review and Action",
+          }),
+          Clockify.countDocuments({
+            resource: username,
+          }),
+          Clockify.countDocuments({
+            resource: username,
+            payflag: true,
+          }),
+        ]);
 
       io.to(username).emit("pendingQueueUpdated", {
         count,
+        countAdmin,
         countClockify,
         countClockifyPaid,
       });

@@ -32,6 +32,9 @@ export default function WorkflowABC() {
   const [clockifyQueueCount, setClockifyQueueCount] = useState(0);
   const [clockifyPaidQueueCount, setClockifyPaidQueueCount] = useState(0);
 
+  //States for Admin4
+  const [pendingAdminQueueCount, setPendingAdminQueueCount] = useState(0);
+
   const [showSpinner, setShowSpinner] = useState(false);
   const navigate = useNavigate();
   const { token, logout } = useContext(AuthContext);
@@ -83,6 +86,7 @@ export default function WorkflowABC() {
     const handlePendingQueue = (data) => {
       console.log("Pending projects queue update received:", data);
       setPendingQueueCount(data.count);
+      setPendingAdminQueueCount(data.countAdmin);
       setClockifyQueueCount(data.countClockify);
       setClockifyPaidQueueCount(data.countClockifyPaid);
     };
@@ -255,6 +259,7 @@ export default function WorkflowABC() {
         );
 
         setPendingQueueCount(res.data.count);
+        setPendingAdminQueueCount(res.data.countAdmin);
         setClockifyQueueCount(res.data.countClockify);
         setClockifyPaidQueueCount(res.data.countClockifyPaid);
       } catch (err) {
@@ -268,7 +273,7 @@ export default function WorkflowABC() {
   }, [API_BASE, user?.username]);
 
   const boxClass =
-    "p-4 bg-sand-50 shadow text-center hover:bg-green-200 focus:outline-none text-black";
+    "p-4 bg-sand-50 shadow-2xl text-center hover:bg-green-200 focus:outline-none text-black border-black border";
 
   const [bit1, bit2, bit3, bit4, bit5, bit6] = user?.role || [];
   // console.log(
@@ -308,7 +313,7 @@ export default function WorkflowABC() {
       <br></br>
       {(bit1 === "1" || bit2 === "1" || bit3 === "1") && (
         <div>
-          <h2 className="text-center font-semibold text-2xl mb-4 text-black">
+          <h2 className="text-center font-semibold text-2xl mb-4 text-white bg-blue-800 rounded-xl">
             CREATIVES WORKFLOW
           </h2>
 
@@ -346,7 +351,7 @@ export default function WorkflowABC() {
           <br />
           <br />
 
-          <h2 className="text-center font-semibold text-2xl mb-4 text-black">
+          <h2 className="text-center font-semibold text-2xl mb-4 text-white bg-blue-800 rounded-xl">
             MY PORTFOLIO
           </h2>
 
@@ -369,11 +374,9 @@ export default function WorkflowABC() {
             >
               <div className="text-lg font-bold ">CLOCKIFY</div>
               <div className="text-sm">
-                {clockifyQueueCount} projects completed
+                {clockifyQueueCount} tasks completed
               </div>
-              <div className="text-sm">
-                {clockifyPaidQueueCount} projects paid
-              </div>
+              <div className="text-sm">{clockifyPaidQueueCount} tasks paid</div>
             </button>
           </div>
 
@@ -383,34 +386,54 @@ export default function WorkflowABC() {
       )}
       {(bit4 === "1" || bit5 === "1" || bit6 === "1") && (
         <div>
-          <h2 className="text-center font-semibold text-2xl mb-4 text-black">
+          <h2 className="text-center font-semibold text-2xl mb-4 text-white bg-blue-800 rounded-xl">
             ADMIN WORKFLOW
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button
-              onClick={() => navigate("/projectmanage")}
-              className={`${boxClass} ${bit4 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
-            >
-              <div className="text-lg font-bold">Projects Management</div>
-            </button>
-            <button
-              onClick={() => navigate("/workflow/b")}
-              className={`${boxClass} ${bit5 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
-            >
-              <div className="text-lg font-bold">Payroll</div>
-            </button>
-            <button
-              onClick={() => navigate("/workflow/b")}
-              className={`${boxClass} ${bit5 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
-            >
-              <div className="text-lg font-bold">Performance Mgt</div>
-            </button>
-            <button
-              onClick={() => navigate("/vouchermanage")}
-              className={`${boxClass} ${bit6 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
-            >
-              <div className="text-lg font-bold">Site Admin</div>
-            </button>
+            {bit4 === "1" && (
+              <button
+                onClick={() => navigate("/adminpending")}
+                className={`${boxClass} ${bit4 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
+                disabled={pendingAdminQueueCount === 0}
+              >
+                <div className="text-lg font-bold ">Song Administration</div>
+                <div className="text-sm">
+                  {pendingAdminQueueCount} projects pending admin action
+                </div>
+              </button>
+            )}
+            {bit6 === "1" && (
+              <button
+                onClick={() => navigate("/projectmanage")}
+                className={`${boxClass} ${bit6 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
+              >
+                <div className="text-lg font-bold">Projects Management</div>
+              </button>
+            )}
+            {bit5 === "1" && (
+              <button
+                onClick={() => navigate("#")}
+                className={`${boxClass} ${bit5 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
+              >
+                <div className="text-lg font-bold">Payroll</div>
+              </button>
+            )}
+            {bit5 === "1" && (
+              <button
+                onClick={() => navigate("#")}
+                className={`${boxClass} ${bit5 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
+              >
+                <div className="text-lg font-bold">Performance Mgt</div>
+              </button>
+            )}
+            {bit6 === "1" && (
+              <button
+                onClick={() => navigate("/vouchermanage")}
+                className={`${boxClass} ${bit6 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
+              >
+                <div className="text-lg font-bold">Site Admin</div>
+              </button>
+            )}
           </div>
         </div>
       )}

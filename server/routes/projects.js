@@ -355,32 +355,73 @@ router.get("/countPendingByuser", async (req, res) => {
       };
     }
 
-    const [count, countClockify, countClockifyPaid] = await Promise.all([
-      Project.countDocuments(query),
-      Clockify.countDocuments({
-        resource: lockUser,
-      }),
-      Clockify.countDocuments({
-        resource: lockUser,
-        payflag: true,
-      }),
-    ]);
+    const [count, countAdmin, countClockify, countClockifyPaid] =
+      await Promise.all([
+        Project.countDocuments(query),
+        Project.countDocuments({
+          status: "Queued for Admin Review and Action",
+        }),
+        Clockify.countDocuments({
+          resource: lockUser,
+        }),
+        Clockify.countDocuments({
+          resource: lockUser,
+          payflag: true,
+        }),
+      ]);
 
-    res.json({ count, countClockify, countClockifyPaid });
+    res.json({ count, countAdmin, countClockify, countClockifyPaid });
   } catch (err) {
     console.error("Count error:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-// GET /api/projects/:id
-router.get("/:id", async (req, res) => {
+// GET /api/projects/songcode/:songcode
+router.get("/songcode/:songcode", async (req, res) => {
   try {
-    const project = await Project.findById(req.params.id);
-    if (!project) return res.status(404).json({ error: "Project not found" });
+    const project = await Project.findOne({
+      songcode: req.params.songcode,
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
     res.json(project);
   } catch (err) {
-    console.error("GET /api/projects/:id error", err);
+    console.error("GET /api/projects/songcode error", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /api/projects/tracker
+
+router.get("/tracker", async (req, res) => {
+  try {
+    let { email, songCode } = req.query;
+
+    if (!email || !songCode) {
+      return res
+        .status(400)
+        .json({ error: "Email and song code are required" });
+    }
+
+    email = email.toLowerCase().trim();
+    songCode = songCode.trim();
+
+    const project = await Project.findOne({
+      email,
+      songcode: songCode,
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    res.json(project);
+  } catch (err) {
+    console.error("GET /api/projects/tracker error", err);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -405,6 +446,7 @@ router.put("/:id", async (req, res) => {
       dispo_remarks,
       assessor,
       assessor_end,
+      status,
       ...otherUpdates
     } = req.body;
 
@@ -430,11 +472,36 @@ router.put("/:id", async (req, res) => {
     if (dispo_remarks !== undefined) updates.dispo_remarks = dispo_remarks;
     if (assessor !== undefined) updates.assessor = assessor;
     if (assessor_end !== undefined) updates.assessor_end = assessor_end;
+    if (status !== undefined) updates.status = status;
 
     const project = await Project.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
     });
+
+    // Send email to customer if status is Project Completed
+
+    if (status === "Project Completed") {
+      const link = `${process.env.FRONTEND_URL}/hpmPlayer/${project.publicId}`;
+      await transporter.sendMail({
+        from: process.env.TITAN_FROM,
+        to: project.email,
+        subject: "Your Heart’s Prayer Song is Ready!",
+        html: ` <p>Thank you again for trusting HeartPrayerMusic to bring your heart’s prayer to life. It has been a privilege to create something so personal and meaningful for you.</p>
+              <p>Our artists have carefully and prayerfully completed your song, giving thoughtful attention to every detail so it truly reflects your intention and message.</p>
+              <p>You can now listen to your completed song using the link below:</p>
+              <p>${link}</p>
+          <br></br>
+              <p>This link will play your song directly in our audio player so you can listen and share the experience with your dedicatee using any device.<p>
+              <p>We hope this song becomes a beautiful and lasting expression of your heart.</p>
+              <p>If you have any questions or need any assistance, feel free to reply to this email—we’re here for you.</p>
+              <br></br>
+              <p>With gratitude,</p>
+              <br/>
+              <p><strong>HeartPrayerMusic Creatives Team</strong></p>
+          `,
+      });
+    }
 
     if (!project) return res.status(404).json({ error: "Project not found" });
 
@@ -462,6 +529,27 @@ router.delete("/:id", async (req, res) => {
     res.json({ message: "Project deleted" });
   } catch (err) {
     console.error("DELETE /api/projects/:id error", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.get("/audioplayer/:publicId", async (req, res) => {
+  try {
+    const project = await Project.findOne({
+      publicId: req.params.publicId,
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+
+    // OPTIONAL: only return what the player needs
+    res.json({
+      filename: project.filename,
+      recipient: project.recipient,
+    });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -815,4 +903,15 @@ router.post("/:id/heartbeat", async (req, res) => {
   res.json({ ok: true });
 });
 
+// GET /api/projects/:id
+router.get("/:id", async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: "Project not found" });
+    res.json(project);
+  } catch (err) {
+    console.error("GET /api/projects/:id error", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 module.exports = router;

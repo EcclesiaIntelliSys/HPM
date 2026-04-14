@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const mongoose = require("mongoose");
 
 const CounterSchema = new mongoose.Schema({
@@ -58,6 +59,9 @@ const ProjectSchema = new mongoose.Schema(
     assessor: { type: String },
     assessor_start: { type: Date },
     assessor_end: { type: Date },
+    admin: { type: String },
+    admin_action: { type: String },
+    admin_action_date: { type: Date },
     voucherNo: { type: String },
     songtitle: { type: String },
     lyrics: { type: String },
@@ -70,6 +74,11 @@ const ProjectSchema = new mongoose.Schema(
       timestamp: Date,
     },
     filename: { type: String },
+    publicId: {
+      type: String,
+      unique: true,
+      index: true,
+    },
   },
 
   { collection: "projects" },
@@ -83,22 +92,27 @@ ProjectSchema.index({
 
 // Pre-save hook to generate songcode with padded sequence
 ProjectSchema.pre("save", async function (next) {
-  if (this.isNew && !this.songcode) {
-    try {
+  try {
+    if (this.isNew && !this.publicId) {
+      this.publicId = crypto.randomBytes(16).toString("hex");
+    }
+
+    if (this.isNew && !this.songcode) {
       const now = new Date();
-      const today = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+      const today = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(
+        2,
+        "0",
+      )}${String(now.getDate()).padStart(2, "0")}`;
 
       let counter = await Counter.findOne({ name: "project_seq" });
 
       if (!counter || counter.date !== today) {
-        // Reset sequence for new day
         counter = await Counter.findOneAndUpdate(
           { name: "project_seq" },
           { seq: 49, date: today },
           { new: true, upsert: true },
         );
       } else {
-        // Increment sequence for same day
         counter = await Counter.findOneAndUpdate(
           { name: "project_seq" },
           { $inc: { seq: 2 } },
@@ -108,11 +122,12 @@ ProjectSchema.pre("save", async function (next) {
 
       const paddedSeq = String(counter.seq).padStart(4, "0");
       this.songcode = `${generateDateCode()}-${paddedSeq}`;
-    } catch (err) {
-      return next(err);
     }
+
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 });
 
 module.exports = mongoose.model("Project", ProjectSchema);

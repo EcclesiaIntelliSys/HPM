@@ -2,6 +2,9 @@ import React, { useEffect, useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import api from "../api/api";
+import Modal from "../components/Modal";
+import Themes from "../components/Themes";
+const currentTheme = Themes.qa;
 
 const API_BASE = process.env.REACT_APP_API_URL;
 
@@ -18,8 +21,16 @@ export default function ArtistClockify() {
   const [pageSize, setPageSize] = useState(5);
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [payFilter, setPayFilter] = useState(""); // "", "settled", "pending"
+  const [payFilter, setPayFilter] = useState(""); // "", "settled", "unpaid"
   const [resourceFilter, setResourceFilter] = useState("");
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [audioLoaded, setAudioLoaded] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const R2_PUBLIC = process.env.REACT_APP_R2_PUBLIC_URL;
+
+  const audioSrc = selectedProject?.filename
+    ? `${R2_PUBLIC}/${encodeURIComponent(selectedProject.filename)}`
+    : null;
 
   // Decode user from token
   useEffect(() => {
@@ -107,7 +118,7 @@ export default function ArtistClockify() {
     const matchesPay =
       !payFilter ||
       (payFilter === "settled" && p.payflag === true) ||
-      (payFilter === "pending" && p.payflag === false);
+      (payFilter === "unpaid" && p.payflag === false);
 
     return (
       matchesSearch && matchesResource && matchesFrom && matchesTo && matchesPay
@@ -116,15 +127,215 @@ export default function ArtistClockify() {
 
   // 2. Compute summary AFTER filtered is ready
   const totalFilteredHours = filtered.reduce((sum, p) => {
-    const hours = p.hours_rendered != null ? Number(p.hours_rendered) : 0;
+    const hours =
+      p.hours_rendered_override != null
+        ? Number(p.hours_rendered_override)
+        : Number(p.hours_rendered);
     return sum + hours;
   }, 0);
 
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const handleRowClick = async (songcode) => {
+    try {
+      const res = await api.get(
+        `${API_BASE}/api/projects/songcode/${songcode}`,
+      );
+
+      setSelectedProject(res.data);
+      setShowModal(true);
+    } catch (err) {
+      console.error("Error fetching project:", err);
+    }
+  };
+
   if (bit1 === "1" || bit2 === "1" || bit3 === "1") {
     return (
       <main>
+        {showModal && selectedProject && (
+          <Modal
+            title={`Project Details - ${selectedProject.songcode}`}
+            onClose={() => {
+              setShowModal(false);
+              setSelectedProject(null);
+            }}
+          >
+            <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-1 gap-4 text-sm text-gray-800">
+                <div>
+                  <span className="font-semibold text-red-900">Status:</span>{" "}
+                  {selectedProject.status}
+                </div>
+
+                <div>
+                  <span className="font-semibold text-red-900">Relation:</span>{" "}
+                  {selectedProject.relation}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">Recipient:</span>{" "}
+                  {selectedProject.recipient}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">Age Group:</span>{" "}
+                  {selectedProject.agegroup}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">Qualities:</span>
+                  <br />{" "}
+                  <span className="whitespace-pre-wrap">
+                    {selectedProject.qualities}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">Moment:</span>
+                  <br />{" "}
+                  <span className="whitespace-pre-wrap">
+                    {selectedProject.moment}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">
+                    Special Message:
+                  </span>
+                  <br />{" "}
+                  <span className="whitespace-pre-wrap">
+                    {selectedProject.specialmsg}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">Genre:</span>{" "}
+                  {selectedProject.genre}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">Voice:</span>{" "}
+                  {selectedProject.voice}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">
+                    Order Date:
+                  </span>{" "}
+                  {selectedProject.createdAt
+                    ? new Date(selectedProject.createdAt).toLocaleDateString()
+                    : "N/A"}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">
+                    Target Date:
+                  </span>{" "}
+                  {selectedProject.targetdate
+                    ? new Date(selectedProject.targetdate).toLocaleDateString()
+                    : "N/A"}
+                </div>
+                <hr />
+                <div>
+                  <span className="font-semibold text-red-900">
+                    Song Title:
+                  </span>{" "}
+                  {selectedProject.songtitle}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">Lyrics:</span>
+                  <br />{" "}
+                  <span className="whitespace-pre-wrap">
+                    {selectedProject.lyrics}
+                  </span>
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">
+                    Song Title (Revised):
+                  </span>{" "}
+                  {selectedProject.songtitlerev || "N/A"}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">
+                    Lyrics (Revised):
+                  </span>
+                  <br />{" "}
+                  <span className="whitespace-pre-wrap">
+                    {selectedProject.lyricsrev || "N/A"}
+                  </span>
+                </div>
+                <hr />
+                <div>
+                  <span className="font-semibold text-red-900">Lyricist:</span>{" "}
+                  {selectedProject.lyricist}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">
+                    Song Artist:
+                  </span>{" "}
+                  {selectedProject.songartist}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">QA:</span>{" "}
+                  {selectedProject.assessor}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">Dispo:</span>{" "}
+                  {selectedProject.dispo}
+                </div>
+                <div>
+                  <span className="font-semibold text-red-900">
+                    Dispo-Remarks:
+                  </span>{" "}
+                  {selectedProject.dispo_remarks}
+                </div>
+              </div>
+            </div>
+            <br />
+            <hr />
+            <br />
+
+            {/* Logs */}
+            <strong>Log Entries</strong>
+            <div className={`${currentTheme.box} space-y-4 text-xs`}>
+              {selectedProject.logs.map((log, index) => (
+                <div key={index}>
+                  <div className="space-y-1">
+                    <p>
+                      <strong>Date:</strong>{" "}
+                      {new Date(log.timestamp).toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>By:</strong> {log.actor}
+                    </p>
+                    <p>
+                      <strong>Message:</strong> {log.message}
+                    </p>
+                  </div>
+
+                  {index !== selectedProject.logs.length - 1 && (
+                    <hr className="border-gray-300 mt-4" />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Quality Assurance Workspace */}
+            <div className={`${currentTheme.box}`}>
+              {/* Audio Playback */}
+              <div className="mt-4">
+                <label className="font-semibold">
+                  {selectedProject.filename}
+                </label>
+
+                {audioSrc && (
+                  <div className="mt-3">
+                    <audio
+                      controls
+                      src={audioSrc}
+                      className="w-full"
+                      onCanPlayThrough={() => setAudioLoaded(true)}
+                    />
+                  </div>
+                )}
+              </div>
+              <hr />
+              <br />
+            </div>
+          </Modal>
+        )}
         <img
           src="/images/mylogo5.png"
           alt="Heart Prayer Music logo"
@@ -227,7 +438,7 @@ export default function ArtistClockify() {
                 >
                   <option value="">All</option>
                   <option value="settled">Settled</option>
-                  <option value="pending">Pending</option>
+                  <option value="unpaid">Unpaid</option>
                 </select>
               </div>
 
@@ -253,8 +464,12 @@ export default function ArtistClockify() {
                 <strong>Records Found:</strong> {filtered.length}
               </span>
               <span>
-                <strong>Total Hours Rendered:</strong>{" "}
+                <strong>Total Time Rendered (Hrs):</strong>{" "}
                 {totalFilteredHours.toFixed(3)}
+              </span>
+              <span>
+                <strong>Total Time Rendered (Mins):</strong>{" "}
+                {(totalFilteredHours * 60).toFixed(3)}
               </span>
             </div>
           </div>
@@ -279,40 +494,54 @@ export default function ArtistClockify() {
                   <th className="p-2 border">Resource Name</th>
                   <th className="p-2 border">Service</th>
                   <th className="p-2 border">Song Code</th>
+                  <th className="p-2 border">Attempt</th>
                   <th className="p-2 border">Start</th>
                   <th className="p-2 border">End</th>
-                  <th className="p-2 border">Hours Rendered</th>
+                  <th className="p-2 border">Minutes (Calculated)</th>
+                  <th className="p-2 border">Minutes (Final)</th>
+                  <th className="p-2 border">Admin by:</th>
+                  <th className="p-2 border">Admin Action:</th>
+                  <th className="p-2 border">Admin Date:</th>
                   <th className="p-2 border">Paid?</th>
                   <th className="p-2 border">Txn Ref</th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.map((p) => {
-                  const url = `/projectdetails/${p._id}`;
+                  // const url = `/projectdetails/${p._id}`;
 
                   return (
                     <tr
                       key={p._id}
                       className="cursor-pointer hover:bg-blue-900 hover:text-white"
-                      onClick={() => role && navigate(url)}
+                      onClick={() => handleRowClick(p.songcode)}
                     >
                       <td className="p-2 border">{p.resource}</td>
                       <td className="p-2 border">{p.service}</td>
                       <td className="p-2 border">{p.songcode}</td>
+                      <td className="p-2 border">{p.attempt}</td>
                       <td className="p-2 border">{formatDate(p.start)}</td>
                       <td className="p-2 border">{formatDate(p.end)}</td>
                       <td className="p-2 border">
                         {p.hours_rendered != null
-                          ? Number(p.hours_rendered).toFixed(3)
+                          ? Number(p.hours_rendered * 60).toFixed(3)
                           : ""}
                       </td>
+                      <td className="p-2 border">
+                        {p.hours_rendered_override != null
+                          ? Number(p.hours_rendered_override * 60).toFixed(3)
+                          : Number(p.hours_rendered * 60).toFixed(3)}
+                      </td>
+                      <td className="p-2 border">{p.reviewer}</td>
+                      <td className="p-2 border">{p.adminaction}</td>
+                      <td className="p-2 border">{formatDate(p.reviewdate)}</td>
                       <td className="p-2 border">
                         <span
                           className={`px-2 py-1 rounded text-white ${
                             p.payflag ? "bg-green-600" : "bg-amber-500"
                           }`}
                         >
-                          {p.payflag ? "Settled" : "Pending"}
+                          {p.payflag ? "Settled" : "Unpaid"}
                         </span>
                       </td>
                       <td className="p-2 border">{p.txnref}</td>

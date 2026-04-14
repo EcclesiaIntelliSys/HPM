@@ -43,6 +43,14 @@ export default function MenuNav() {
             Our Process
           </button>
         </li>
+        <li>
+          <button
+            onClick={() => scrollToSection("ordertracker-section")}
+            className="text-olive-900 hover:text-olive-700 hover:bg-terra-100"
+          >
+            Track Order
+          </button>
+        </li>
       </ul>
     </nav>
   );

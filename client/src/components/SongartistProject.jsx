@@ -443,18 +443,21 @@ export default function SongartistProject() {
               {project.agegroup}
             </div>
             <div>
-              <span className="font-semibold text-red-900">Qualities:</span>{" "}
-              {project.qualities}
+              <span className="font-semibold text-red-900">Qualities:</span>
+              <br />{" "}
+              <span className="whitespace-pre-wrap">{project.qualities}</span>
             </div>
             <div>
-              <span className="font-semibold text-red-900">Moment:</span>{" "}
-              {project.moment}
+              <span className="font-semibold text-red-900">Moment:</span>
+              <br />{" "}
+              <span className="whitespace-pre-wrap">{project.moment}</span>
             </div>
             <div>
               <span className="font-semibold text-red-900">
                 Special Message:
-              </span>{" "}
-              {project.specialmsg}
+              </span>
+              <br />{" "}
+              <span className="whitespace-pre-wrap">{project.specialmsg}</span>
             </div>
             <div>
               <span className="font-semibold text-red-900">Genre:</span>{" "}
@@ -482,8 +485,9 @@ export default function SongartistProject() {
             </div>
             <div></div>
             <div>
-              <span className="font-semibold text-red-900">Lyrics:</span>{" "}
-              {project.lyrics}
+              <span className="font-semibold text-red-900">Lyrics:</span>
+              <br />{" "}
+              <span className="whitespace-pre-wrap">{project.lyrics}</span>
             </div>
           </div>
         </div>

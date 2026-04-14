@@ -22,6 +22,11 @@ import SongartistProject from "./components/SongartistProject";
 import QualityassuranceProject from "./components/QualityassuranceProject";
 import ArtistPending from "./components/ArtistPending";
 import ArtistClockify from "./components/ArtistClockify";
+import AdminPending from "./components/AdminPending";
+import SongDetails from "./components/SongDetails";
+import AudioPlayer from "./components/AudioPlayer";
+import OrderTracker from "./components/Tracker";
+
 import { useNavigate } from "react-router-dom";
 
 export default function App() {
@@ -69,6 +74,7 @@ export default function App() {
           <Market />
           <OurProcess id="ourprocess-section" />
           <SampleAudio id="sampleaudio-section" />
+          <OrderTracker id="ordertracker-section" />
           <Footer />
         </div>
       ),
@@ -152,6 +158,26 @@ export default function App() {
           <ArtistClockify />
         </ProtectedRoute>
       ),
+    },
+    {
+      path: "/adminpending",
+      element: (
+        <ProtectedRoute>
+          <AdminPending />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/songdetails/:id",
+      element: (
+        <ProtectedRoute>
+          <SongDetails />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/hpmPlayer/:publicId",
+      element: <AudioPlayer />,
     },
     {
       path: "/verify/:token",

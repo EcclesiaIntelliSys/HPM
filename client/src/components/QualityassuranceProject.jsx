@@ -221,10 +221,8 @@ export default function QualityassuranceProject() {
       // Add log entry
       const message =
         dispo === "Approve"
-          ? "Song APPROVED. Submitted Assessment for Admin Review and Action"
-          : dispo === "Reject"
-            ? "Song REJECTED. Submitted Assessment for Admin Review and Action"
-            : "Submitted Assessment for Admin Review and Action";
+          ? `Song APPROVED (${dispo_remarks}). Submitted Assessment for Admin Review and Action`
+          : `Song REJECTED (${dispo_remarks}). Submitted Assessment for Admin Review and Action`;
 
       const logEntry = {
         timestamp: assessorEnd,
@@ -417,18 +415,21 @@ export default function QualityassuranceProject() {
               {project.agegroup}
             </div>
             <div>
-              <span className="font-semibold text-red-900">Qualities:</span>{" "}
-              {project.qualities}
+              <span className="font-semibold text-red-900">Qualities:</span>
+              <br />{" "}
+              <span className="whitespace-pre-wrap">{project.qualities}</span>
             </div>
             <div>
-              <span className="font-semibold text-red-900">Moment:</span>{" "}
-              {project.moment}
+              <span className="font-semibold text-red-900">Moment:</span>
+              <br />{" "}
+              <span className="whitespace-pre-wrap">{project.moment}</span>
             </div>
             <div>
               <span className="font-semibold text-red-900">
                 Special Message:
-              </span>{" "}
-              {project.specialmsg}
+              </span>
+              <br />{" "}
+              <span className="whitespace-pre-wrap">{project.specialmsg}</span>
             </div>
             <div>
               <span className="font-semibold text-red-900">Genre:</span>{" "}
@@ -457,8 +458,9 @@ export default function QualityassuranceProject() {
             </div>
             <div></div>
             <div>
-              <span className="font-semibold text-red-900">Lyrics:</span>{" "}
-              {project.lyrics}
+              <span className="font-semibold text-red-900">Lyrics:</span>
+              <br />{" "}
+              <span className="whitespace-pre-wrap">{project.lyrics}</span>
             </div>
             <div></div>
             <div>
@@ -471,8 +473,11 @@ export default function QualityassuranceProject() {
             <div>
               <span className="font-semibold text-red-900">
                 Lyrics (Revised):
-              </span>{" "}
-              {project.lyricsrev || "N/A"}
+              </span>
+              <br />{" "}
+              <span className="whitespace-pre-wrap">
+                {project.lyricsrev || "N/A"}
+              </span>
             </div>
           </div>
         </div>
