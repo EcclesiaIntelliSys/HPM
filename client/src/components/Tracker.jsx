@@ -94,7 +94,7 @@ export default function Market({ id }) {
 
       setRecordFound(true);
     } catch (err) {
-      console.log("FULL ERROR:", err);
+      // console.log("FULL ERROR:", err);
 
       if (err.response?.status === 404) {
         setRecordFound(false);

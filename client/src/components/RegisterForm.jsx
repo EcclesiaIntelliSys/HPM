@@ -187,7 +187,7 @@ export default function RegisterForm() {
       }
 
       const result = await res.json();
-      console.log("Server response:", result);
+      // console.log("Server response:", result);
       setModalMessage(result.message || result.error);
       setModalOpen(true);
       setModalNavigate(true);

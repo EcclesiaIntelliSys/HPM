@@ -23,18 +23,18 @@ export function AuthProvider({ children }) {
         !refreshing
       ) {
         originalRequest._retry = true;
-        console.log(
-          `[${new Date().toISOString()}] Access token expired. Attempting refresh...`,
-        );
+        // console.log(
+        //   `[${new Date().toISOString()}] Access token expired. Attempting refresh...`,
+        // );
         setRefreshing(true);
         try {
           const res = await api.get("/api/auth/refresh");
           const newToken = res.data.token;
 
           login(newToken);
-          console.log(
-            `[${new Date().toISOString()}] Refresh succeeded. New token issued.`,
-          );
+          // console.log(
+          //   `[${new Date().toISOString()}] Refresh succeeded. New token issued.`,
+          // );
 
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           setRefreshing(false);
@@ -67,9 +67,9 @@ export function AuthProvider({ children }) {
       const expiryTime = decoded.exp * 1000; // ms
       const now = Date.now();
       if (now >= expiryTime) {
-        console.log(
-          `[${new Date().toISOString()}] Token already expired. Logging out.`,
-        );
+        // console.log(
+        //   `[${new Date().toISOString()}] Token already expired. Logging out.`,
+        // );
         logout();
       } else {
         // Try to refresh 1 minute before expiry
@@ -77,20 +77,20 @@ export function AuthProvider({ children }) {
         if (refreshTime <= 0) {
           refreshTime = expiryTime - now - 5000;
         }
-        console.log(
-          `[${new Date().toISOString()}] Proactive refresh scheduled in ${Math.round(refreshTime / 1000)} seconds.`,
-        );
+        // console.log(
+        //   `[${new Date().toISOString()}] Proactive refresh scheduled in ${Math.round(refreshTime / 1000)} seconds.`,
+        // );
         const timer = setTimeout(async () => {
-          console.log(
-            `[${new Date().toISOString()}] Proactive refresh triggered.`,
-          );
+          // console.log(
+          //   `[${new Date().toISOString()}] Proactive refresh triggered.`,
+          // );
           try {
             const res = await api.get("/api/auth/refresh");
             const newToken = res.data.token;
             login(newToken);
-            console.log(
-              `[${new Date().toISOString()}] Proactive refresh succeeded. New token issued.`,
-            );
+            // console.log(
+            //   `[${new Date().toISOString()}] Proactive refresh succeeded. New token issued.`,
+            // );
           } catch (err) {
             console.error(
               `[${new Date().toISOString()}] Proactive refresh failed:`,

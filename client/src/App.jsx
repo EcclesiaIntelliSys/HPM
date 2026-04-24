@@ -1,5 +1,9 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import { useState } from "react";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  useParams,
+} from "react-router-dom";
+import { useState, useEffect } from "react";
 
 import Banner from "./components/Banner";
 import Carousel from "./components/Carousel";
@@ -9,7 +13,7 @@ import SampleAudio from "./components/SampleAudio";
 import Market from "./components/Market";
 import Footer from "./components/Footer";
 import SongSurvey from "./components/SongSurvey";
-import PaymentMock from "./components/PaymentMock";
+import CheckoutPage from "./components/CheckoutPage";
 import ArtistSignOn from "./components/ArtistSignOn";
 import WorkflowABC from "./components/WorkflowABC";
 import VoucherManage from "./components/VoucherManage";
@@ -26,36 +30,47 @@ import AdminPending from "./components/AdminPending";
 import SongDetails from "./components/SongDetails";
 import AudioPlayer from "./components/AudioPlayer";
 import OrderTracker from "./components/Tracker";
+import CheckoutWrapper from "./components/CheckoutWrapper";
+import SuccessPage from "./components/SuccessPage";
 
 import { useNavigate } from "react-router-dom";
 
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+const stripePromise = process.env.REACT_APP_STRIPE_PUBLIC_KEY
+  ? loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY)
+  : null;
+
 export default function App() {
-  const [project, setProject] = useState(null);
+  // const [project, setProject] = useState(null);
 
   // Wrappers stay as normal components that use useNavigate internally
-  function SongSurveyWrapper() {
-    const navigate = useNavigate();
-    return (
-      <SongSurvey
-        onNext={(data) => {
-          setProject(data);
-          navigate("/payment");
-        }}
-      />
-    );
-  }
+  // function SongSurveyWrapper() {
+  //   const navigate = useNavigate();
+  //   return (
+  //     <SongSurvey
+  //       onNext={(data) => {
+  //         setProject(data);
+  //         navigate(`/payment/${project._id}`);
+  //       }}
+  //     />
+  //   );
+  // }
 
-  function PaymentWrapper() {
-    const navigate = useNavigate();
-    return <PaymentMock project={project} onDone={() => navigate("/")} />;
-  }
+  // function PaymentWrapper() {
+  //   return (
+  //     <Elements stripe={stripePromise}>
+  //       <CheckoutPage project={project} />
+  //     </Elements>
+  //   );
+  // }
 
   function ArtistSignOnWrapper() {
     const navigate = useNavigate();
     return (
       <ArtistSignOn
         onSuccess={() => {
-          console.log("Login successful!");
+          // console.log("Login successful!");
           navigate("/workflow");
         }}
       />
@@ -81,12 +96,12 @@ export default function App() {
     },
     {
       path: "/create",
-      element: <SongSurveyWrapper />,
+      element: <SongSurvey />,
     },
-    {
-      path: "/payment",
-      element: <PaymentWrapper />,
-    },
+    // {
+    //   path: "/payment/:projectId",
+    //   element: <PaymentWrapper />,
+    // },
     {
       path: "/creatives",
       element: <ArtistSignOnWrapper />,
@@ -182,6 +197,14 @@ export default function App() {
     {
       path: "/verify/:token",
       element: <VerifyPage />,
+    },
+    {
+      path: "/checkout/:projectId",
+      element: <CheckoutWrapper />,
+    },
+    {
+      path: "/success/:projectId",
+      element: <SuccessPage />,
     },
   ]);
 

@@ -236,7 +236,7 @@ router.delete("/delete-unverified/:token", async (req, res) => {
 });
 
 router.get("/refresh", async (req, res) => {
-  console.log("🔥 REFRESH ROUTE HIT");
+  // console.log("🔥 REFRESH ROUTE HIT");
   const oldRefreshToken = req.cookies.refreshToken;
 
   if (!oldRefreshToken) {
@@ -249,7 +249,7 @@ router.get("/refresh", async (req, res) => {
     if (!user) {
       return res.status(401).json({ error: "User not found" });
     }
-    console.log("Existing tokens:" + user.refreshTokens);
+    // console.log("Existing tokens:" + user.refreshTokens);
     // Check token exists in DB
     let matchedToken = null;
 
@@ -272,7 +272,7 @@ router.get("/refresh", async (req, res) => {
 
     // Remove old refresh token
     user.refreshTokens = [];
-    console.log("Removed old tokens:" + user.refreshTokens);
+    // console.log("Removed old tokens:" + user.refreshTokens);
 
     // Generate new refresh token
     const newRefreshToken = jwt.sign(
@@ -296,7 +296,7 @@ router.get("/refresh", async (req, res) => {
       { expiresIn: "10m" },
     );
 
-    console.log("New access token issued: " + newAccessToken);
+    // console.log("New access token issued: " + newAccessToken);
 
     // Send rotated refresh token in cookie
 
@@ -311,7 +311,7 @@ router.get("/refresh", async (req, res) => {
     res.json({ token: newAccessToken });
     // Run cleanup in background
     cleanupOrphan().catch((err) => console.error("Cleanup error:", err));
-    console.log("New refresh token issued: " + newRefreshToken);
+    // console.log("New refresh token issued: " + newRefreshToken);
   } catch (err) {
     console.error("Refresh error:", err);
     res.status(401).json({ error: "Invalid refresh token" });
@@ -347,7 +347,7 @@ router.post("/logout", async (req, res) => {
       await user.save();
     }
   } catch (err) {
-    console.log("Logout token verification failed:", err.message);
+    // console.log("Logout token verification failed:", err.message);
   }
 
   // Clear cookie (must match original cookie options!)

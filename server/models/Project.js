@@ -38,14 +38,14 @@ const ProjectSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     targetdate: { type: Date },
     deliverydate: { type: Date },
-    status: { type: String, default: "Queued for Lyricist" },
+    status: { type: String, default: "Awaiting Payment" },
     logs: {
       type: [LogSchema],
       default: () => [
         {
           timestamp: Date.now(),
           actor: "SYSTEM",
-          message: "Order Received. Queued for Lyricist.",
+          message: "Order Details Received. Awaiting Payment.",
         },
       ],
     },
@@ -79,6 +79,17 @@ const ProjectSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
+    paymentIntentId: { type: String },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed"],
+      default: "pending",
+    },
+    amount: { type: Number }, // store in cents
+    promoDisc: { type: Number }, // store in cents
+    voucherDiscount: { type: Number }, // store in cents
+    basePrice: { type: Number }, // store in cents
+    currency: { type: String, default: "usd" },
   },
 
   { collection: "projects" },

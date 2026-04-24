@@ -229,6 +229,7 @@ export default function SongartistProject() {
           songartist: user?.username,
           songartist_end: songartistEnd,
           status: "Queued for Quality Assurance",
+          clearLock: true,
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );

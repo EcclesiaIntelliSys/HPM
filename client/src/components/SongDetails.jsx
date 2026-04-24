@@ -105,19 +105,19 @@ export default function SongDetails() {
               (new Date(res.data.lyricist_end) -
                 new Date(res.data.lyricist_start)) /
               (1000 * 60)
-            ).toFixed(2) ?? "0.00",
+            ).toFixed(3) ?? "0.00",
           songartist_ov:
             (
               (new Date(res.data.songartist_end) -
                 new Date(res.data.songartist_start)) /
               (1000 * 60)
-            ).toFixed(2) ?? "0.00",
+            ).toFixed(3) ?? "0.00",
           assessor_ov:
             (
               (new Date(res.data.assessor_end) -
                 new Date(res.data.assessor_start)) /
               (1000 * 60)
-            ).toFixed(2) ?? "0.00",
+            ).toFixed(3) ?? "0.00",
         }));
       } catch (err) {
         if (err.response?.status === 409) {
@@ -172,12 +172,13 @@ export default function SongDetails() {
       setShowSubmitModal(false);
       setSubmittingProject(true);
 
+      // Update project log, status, and reset artist details for requeued projects
       const adminActionsMap = {
-        send_to_customer: "Send Song to Customer",
-        requeue_lyricist: "Requeue for Lyricist Action",
-        requeue_songartist: "Requeue for Song Artist Action",
-        requeue_qa: "Requeue for QA Action",
-        admin_queue: "Place back to Admin Queue",
+        send_to_customer: "Send Song to Customer.",
+        requeue_lyricist: "Requeue for Lyricist Action.",
+        requeue_songartist: "Requeue for Song Artist Action.",
+        requeue_qa: "Requeue for QA Action.",
+        admin_queue: "Place back to Admin Queue.",
         cancel: "Cancel Project",
       };
 
@@ -195,13 +196,22 @@ export default function SongDetails() {
 
       const overrideMessages = [];
 
-      if (parseFloat(overrides.lyricist_ov) !== lyricistTimeRendered) {
+      if (
+        overrides.lyricist_ov &&
+        overrides.lyricist_ov !== lyricistTimeRendered
+      ) {
         overrideMessages.push("Revised time rendered for Lyricist.");
       }
-      if (parseFloat(overrides.songartist_ov) !== songartistTimeRendered) {
+      if (
+        overrides.songartist_ov &&
+        overrides.songartist_ov !== songartistTimeRendered
+      ) {
         overrideMessages.push("Revised time rendered for Song Artist.");
       }
-      if (parseFloat(overrides.assessor_ov) !== assessorTimeRendered) {
+      if (
+        overrides.assessor_ov &&
+        overrides.assessor_ov !== assessorTimeRendered
+      ) {
         overrideMessages.push("Revised time rendered for QA Assessor.");
       }
 
@@ -213,20 +223,41 @@ export default function SongDetails() {
 
       const adminActionDate = new Date().toISOString();
 
-      await axios.put(
-        `${API_BASE}/api/projectsmanage/${id}`,
-        {
-          admin: user?.username,
-          admin_action: adminActionText,
-          admin_action_date: adminActionDate,
-          status,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const payload = {
+        admin: user?.username,
+        admin_action: adminActionText,
+        admin_action_date: adminActionDate,
+        status,
+      };
 
-      setIsSubmitted(true);
+      // Reset timers based on action
+      if (action === "requeue_lyricist") {
+        payload.lyricist = null;
+        payload.lyricist_start = null;
+        payload.lyricist_end = null;
+        payload.songartist = null;
+        payload.songartist_start = null;
+        payload.songartist_end = null;
+        payload.assessor = null;
+        payload.assessor_start = null;
+        payload.assessor_end = null;
+      }
+
+      if (action === "requeue_songartist") {
+        payload.songartist = null;
+        payload.songartist_start = null;
+        payload.songartist_end = null;
+        payload.assessor = null;
+        payload.assessor_start = null;
+        payload.assessor_end = null;
+      }
+
+      if (action === "requeue_qa") {
+        payload.assessor = null;
+        payload.assessor_start = null;
+        payload.assessor_end = null;
+      }
+
       // Add log entry
       const message = "Admin Actions: " + adminActionText;
 
@@ -278,6 +309,12 @@ export default function SongDetails() {
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
+
+      await axios.put(`${API_BASE}/api/projectsmanage/${id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setIsSubmitted(true);
       setShowSubmitModal(false);
       setShowAckModal(true);
     } catch (err) {
@@ -309,7 +346,7 @@ export default function SongDetails() {
       ? (
           (new Date(project.lyricist_end) - new Date(project.lyricist_start)) /
           (1000 * 60)
-        ).toFixed(2)
+        ).toFixed(3)
       : "N/A";
 
   const songartistTimeRendered =
@@ -318,7 +355,7 @@ export default function SongDetails() {
           (new Date(project.songartist_end) -
             new Date(project.songartist_start)) /
           (1000 * 60)
-        ).toFixed(2)
+        ).toFixed(3)
       : "N/A";
 
   const assessorTimeRendered =
@@ -326,7 +363,7 @@ export default function SongDetails() {
       ? (
           (new Date(project.assessor_end) - new Date(project.assessor_start)) /
           (1000 * 60)
-        ).toFixed(2)
+        ).toFixed(3)
       : "N/A";
 
   // Start Render here
@@ -546,7 +583,7 @@ export default function SongDetails() {
                   <td className="px-2 py-1 text-center border-b border-gray-400">
                     <input
                       type="number"
-                      step="0.01"
+                      step="0.001"
                       min="0"
                       value={overrides.lyricist_ov}
                       onChange={(e) =>
@@ -560,11 +597,11 @@ export default function SongDetails() {
                         if (isNaN(val) || val < 0) val = 0; // clamp negative or invalid to 0
                         setOverrides({
                           ...overrides,
-                          lyricist_ov: val.toFixed(2),
+                          lyricist_ov: val.toFixed(3),
                         });
                       }}
                       className="w-16 px-1 py-0.5 border border-gray-300 rounded text-center"
-                      placeholder="0.00"
+                      placeholder="0.000"
                     />
                   </td>
                 </tr>
@@ -582,7 +619,7 @@ export default function SongDetails() {
                   <td className="px-2 py-1 text-center border-b border-gray-400">
                     <input
                       type="number"
-                      step="0.01"
+                      step="0.001"
                       min="0"
                       value={overrides.songartist_ov}
                       onChange={(e) =>
@@ -596,11 +633,11 @@ export default function SongDetails() {
                         if (isNaN(val) || val < 0) val = 0; // clamp negative or invalid to 0
                         setOverrides({
                           ...overrides,
-                          songartist_ov: val.toFixed(2),
+                          songartist_ov: val.toFixed(3),
                         });
                       }}
                       className="w-16 px-1 py-0.5 border border-gray-300 rounded text-center"
-                      placeholder="0.00"
+                      placeholder="0.000"
                     />
                   </td>
                 </tr>
@@ -618,7 +655,7 @@ export default function SongDetails() {
                   <td className="px-2 py-1 text-center">
                     <input
                       type="number"
-                      step="0.01"
+                      step="0.001"
                       min="0"
                       value={overrides.assessor_ov}
                       onChange={(e) =>
@@ -632,11 +669,11 @@ export default function SongDetails() {
                         if (isNaN(val) || val < 0) val = 0; // clamp negative or invalid to 0
                         setOverrides({
                           ...overrides,
-                          assessor_ov: val.toFixed(2),
+                          assessor_ov: val.toFixed(3),
                         });
                       }}
                       className="w-16 px-1 py-0.5 border border-gray-300 rounded text-center"
-                      placeholder="0.00"
+                      placeholder="0.000"
                     />{" "}
                   </td>
                 </tr>

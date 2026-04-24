@@ -25,7 +25,7 @@ async function requeueProjects({
 }) {
   const expiry = new Date(Date.now() - claimMinutes * 60 * 1000);
   const now = new Date();
-  console.log("Requeing projects");
+  // console.log("Requeing projects");
   const result = await Project.updateMany(
     {
       status,

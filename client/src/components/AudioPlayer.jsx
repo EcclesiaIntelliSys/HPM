@@ -37,10 +37,21 @@ export default function AudioPlayer() {
   const API_BASE = process.env.REACT_APP_API_URL;
   const R2_PUBLIC = process.env.REACT_APP_R2_PUBLIC_URL;
 
-  // const artwork =
-  //   project?.coverImage ||
-  //   "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?q=80&w=800";
-  const artwork = project?.coverImage || "/images/Nostalgicphonograph.png";
+  const genreImages = {
+    Worship: "/images/worship.png",
+    Jazz: "/images/jazz.png",
+    "R&B / Soul": "/images/rnb.png",
+    Country: "/images/country.png",
+    Pop: "/images/pop.png",
+    "Rap / Hip-hop": "/images/rap.png",
+    Electronic: "/images/electronic.png",
+    Reggae: "/images/reggae.png",
+    "Indie Pop Rock": "/images/generic.png",
+    "Latin-Inspired": "/images/generic.png",
+    Chorale: "/images/generic.png",
+    "Cinematic / Epic": "/images/generic.png",
+  };
+  const artwork = genreImages[project?.genre] || "/images/generics.png";
 
   const accent = "rose"; // 🔥 change here (violet, blue, etc.)
 
@@ -427,7 +438,7 @@ export default function AudioPlayer() {
             <img
               src={artwork}
               alt="cover"
-              className={`w-full h-full object-cover ${isPlaying ? "opacity-20" : "opacity-100"}`}
+              className={`w-full h-full object-cover ${isPlaying ? "opacity-50" : "opacity-100"}`}
             />
             {/* Visualizer Canvas */}
             <canvas
@@ -452,7 +463,7 @@ export default function AudioPlayer() {
         {/* 🎵 Info */}
         <div className="w-full max-w-xs overflow-hidden mt-5">
           <div className="group relative">
-            <div className="whitespace-nowrap group-hover:animate-marquee font-montserrat">
+            <div className="whitespace-nowrap group-hover:animate-marquee font-montserrat text-sm">
               {project?.filename || "Your Song"}
             </div>
           </div>

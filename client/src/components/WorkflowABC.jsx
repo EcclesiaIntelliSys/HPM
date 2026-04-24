@@ -69,22 +69,22 @@ export default function WorkflowABC() {
     if (!socket) return;
 
     const handleLyricistQueue = (data) => {
-      console.log("Lyricist queue update received:", data);
+      // console.log("Lyricist queue update received:", data);
       setLyricistQueueCount(data.count);
     };
 
     const handleSAQueue = (data) => {
-      console.log("Song Artist queue update received:", data);
+      // console.log("Song Artist queue update received:", data);
       setSAQueueCount(data.count);
     };
 
     const handleQAQueue = (data) => {
-      console.log("Quality Assessor queue update received:", data);
+      // console.log("Quality Assessor queue update received:", data);
       setQAQueueCount(data.count);
     };
 
     const handlePendingQueue = (data) => {
-      console.log("Pending projects queue update received:", data);
+      // console.log("Pending projects queue update received:", data);
       setPendingQueueCount(data.count);
       setPendingAdminQueueCount(data.countAdmin);
       setClockifyQueueCount(data.countClockify);
@@ -244,9 +244,9 @@ export default function WorkflowABC() {
   useEffect(() => {
     const fetchPendingQueueCount = async () => {
       try {
-        console.log(
-          `Fetching pending count for ${user?.username} (current: ${pendingQueueCount})`,
-        );
+        // console.log(
+        //   `Fetching pending count for ${user?.username} (current: ${pendingQueueCount})`,
+        // );
 
         const res = await api.get(
           `${API_BASE}/api/projectsmanage/countPendingByuser`,

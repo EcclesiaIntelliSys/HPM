@@ -31,7 +31,7 @@ export const SocketProvider = ({ children }) => {
     // Join per-user room once connected
     newSocket.on("connect", () => {
       newSocket.emit("joinUserRoom", username);
-      console.log("Socket connected and joined room:", username);
+      // console.log("Socket connected and joined room:", username);
     });
 
     setSocket(newSocket);

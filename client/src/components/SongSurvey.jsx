@@ -94,7 +94,16 @@ const VOICE_EXPLANATIONS = {
 };
 
 export default function SongRequestForm() {
+  // if (submitting) return;
+  // setSubmitting(true);
+
   const [step, setStep] = useState(1);
+  const [changingStep, setChangingStep] = useState(false);
+
+  // useEffect(() => {
+  //   console.log("Value of Step Now:", step);
+  // }, [step]); // Only runs when myState changes
+
   const [form, setForm] = useState({
     relation: "",
     recipient: "",
@@ -110,13 +119,12 @@ export default function SongRequestForm() {
   });
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState({
     otherRelation: false,
     recipient: false,
   });
 
-  const [orderRef, setOrderRef] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const [vouchers, setVouchers] = useState([]);
@@ -154,8 +162,9 @@ export default function SongRequestForm() {
       voucherError = "Voucher already claimed";
     }
   }
-  const voucherDisc = matchedVoucher ? matchedVoucher.discount : 0;
-  const nett = REG_PRICE - INTRO_DISC - (REG_PRICE * voucherDisc) / 100;
+  const voucherDisc =
+    ((matchedVoucher ? matchedVoucher.discount : 0) / 100) * REG_PRICE;
+  const nett = REG_PRICE - INTRO_DISC - voucherDisc;
 
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -195,16 +204,29 @@ export default function SongRequestForm() {
     return false;
   };
 
+  // const next = () => {
+  //   if (validateStep(step)) setStep(step + 1);
+  // };
   const next = () => {
-    if (validateStep(step)) setStep(step + 1);
+    if (!validateStep(step) || changingStep) return;
+
+    setChangingStep(true);
+    setStep(step + 1);
+
+    setTimeout(() => setChangingStep(false), 150);
   };
+
   const back = () => {
     if (step > 1) setStep(step - 1);
   };
 
   const handleSubmit = async (e) => {
+    if (loading || submitting) {
+      return;
+    }
     e.preventDefault();
     if (!validateStep(6)) return;
+    if (step !== 6) return; // hard safety gate
     // Build payload: if relation is "Other", use otherRelation instead
     const payload = {
       ...form,
@@ -223,10 +245,15 @@ export default function SongRequestForm() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Save failed");
-      setStatus("Saved successfully.");
-      setOrderRef(data.songcode);
-      setModalOpen(true);
+
+      if (!res.ok || !data.id) {
+        throw new Error(
+          data.error || "Project creation failed (no ID returned)",
+        );
+      }
+
+      setStatus("Redirecting to secure payment...");
+      navigate(`/checkout/${data.id}`);
     } catch (err) {
       setStatus("Error saving: " + err.message);
     } finally {
@@ -315,7 +342,8 @@ export default function SongRequestForm() {
   }
 
   return (
-    <form className="max-w-3xl mx-auto p-4" onSubmit={handleSubmit} noValidate>
+    // <form className="max-w-3xl mx-auto p-4" onSubmit={handleSubmit} noValidate>
+    <div className="max-w-3xl mx-auto p-4">
       {/* Page label and progress bar */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2 font-serif">
@@ -871,14 +899,14 @@ export default function SongRequestForm() {
                 <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
                   <span>Heart's Prayer in a Song:</span>
                   <span className="justify-end text-blue-900 font-black">
-                    ${REG_PRICE} USD
+                    ${REG_PRICE}
                   </span>
                 </div>
                 <hr></hr>
                 <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
                   <span>Less: Introductory Discount:</span>
                   <span className="justify-end text-red-900 font-black">
-                    (${INTRO_DISC} USD)
+                    (${INTRO_DISC})
                   </span>
                 </div>
                 {form.voucherNo &&
@@ -892,13 +920,7 @@ export default function SongRequestForm() {
                       {" "}
                       <span>Less: Voucher Discount</span>{" "}
                       <span className="justify-end text-red-900 font-black">
-                        {" "}
-                        ({" "}
-                        {
-                          vouchers.find((v) => v.vouchercode === form.voucherNo)
-                            .discount
-                        }{" "}
-                        %){" "}
+                        (${voucherDisc})
                       </span>{" "}
                     </div>
                   )}
@@ -1100,7 +1122,7 @@ export default function SongRequestForm() {
           <button
             type="button"
             onClick={next}
-            disabled={!validateStep(step)}
+            disabled={!validateStep(step) || changingStep}
             className={`flex items-center gap-2 px-4 py-2 rounded ${validateStep(step) ? "bg-olive-800 text-white hover:shadow-md hover:bg-olive-900" : "bg-gray-200 text-gray-500"}`}
           >
             Next
@@ -1108,7 +1130,8 @@ export default function SongRequestForm() {
           </button>
         ) : (
           <button
-            type="submit"
+            type="button"
+            onClick={handleSubmit}
             disabled={!validateStep(6)}
             className={`flex items-center gap-2 px-4 py-2 rounded ${validateStep(6) ? "bg-olive-800 text-white hover:shadow-md hover:bg-olive-900" : "bg-gray-200 text-gray-500"}`}
           >
@@ -1117,24 +1140,7 @@ export default function SongRequestForm() {
           </button>
         )}
       </div>
-      {modalOpen && (
-        <Modal
-          title="Thank you for your order"
-          onClose={() => {
-            setModalOpen(false);
-            navigate("/");
-
-            // ✅ redirect to front page
-          }}
-        >
-          {" "}
-          <p>
-            {" "}
-            Our creatives team will start work on it.
-            <br /> Order Reference # {orderRef}{" "}
-          </p>{" "}
-        </Modal>
-      )}
-    </form>
+      {/* </form> */}
+    </div>
   );
 }

@@ -172,102 +172,6 @@ router.post("/", async (req, res) => {
 
     await project.save();
 
-    // ✅ Update voucher if voucherNo provided
-    if (voucherNo) {
-      await Voucher.findOneAndUpdate(
-        { vouchercode: voucherNo },
-        {
-          valid: false,
-          claimed: true,
-          claimedby: email,
-          claimdate: new Date(),
-        },
-        { new: true },
-      );
-    }
-
-    await transporter.sendMail({
-      from: process.env.TITAN_FROM,
-      to: email,
-      subject: "Your Heart’s Prayer Is Being Crafted Into a Song",
-      html: ` <p>Thank you for trusting <strong>HeartPrayerMusic</strong> to transform your heart’s prayer into a song. We’re honored to be part of something so personal and meaningful.</p>
-              <p>Our gifted artists are already prayerfully and thoughtfully working on your custom song, giving careful attention to every detail so it reflects your heart and intention.</p>
-              <p>Your custom song will be delivered to you on or before <strong>${targetdate.toLocaleDateString(
-                "en-US",
-                {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                },
-              )}</strong>. You may track the status of your custom song by referencing Song Code # <strong style="text-decoration: underline;">${project.songcode}</strong>.</p>
-          <br></br>
-                    <div className="w-3/4 shadow-md py-8 px-14 bg-gray-100 text-sm font-mono border-2 border-gray-200 carrois-gothic-sc-regular">
-            <div className="my-0">
-              <p className="text-center font-black">
-                <strong>CUSTOM SONG SPECIFICATION</strong>
-              </p>
-              <br/>
-              <p className="font-light">
-                A custom song dedicated to 
-                <strong><span className="font-semibold text-blue-800 font-montserrat">
-                  ${recipient} 
-                </span></strong>
-                (
-                <strong><span className="font-semibold text-blue-800 font-montserrat">
-                  ${relation}
-                </span></strong>
-                ). <span> </span>
-                ${recipient}'s age group is 
-                <strong><span className="font-semibold text-blue-800 font-montserrat">
-                  ${agegroup}
-                </span></strong>
-                .
-              </p>
-              <div className="flex text-md gap-5">
-                <span className="w-1/4 text-right">Special Qualities :</span>
-                <strong><span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
-                  ${qualities}
-                </span></strong>
-              </div>
-              <div className="flex text-md gap-5">
-                <span className="w-1/4 text-right">Memorable Moments :</span>
-                <strong><span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
-                  ${moment}
-                </span></strong>
-              </div>
-              <div className="flex text-md gap-5">
-                <span className="w-1/4 text-right">
-                  What This Song Should Say :
-                </span>
-                <strong><span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
-                  ${specialmsg}
-                </span></strong>
-              </div>
-              <div className="flex text-md gap-5">
-                <span className="w-1/4 text-right">Song Style / Genre :</span>
-                <strong><span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
-                  ${genre}
-                </span></strong>
-              </div>
-              <div className="flex text-md gap-5">
-                <span className="w-1/4 text-right">
-                  Preferred Voice Gender :
-                </span>
-                <strong><span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
-                  ${voice}
-                </span></strong>
-              </div>
-              <br/><br/>
-              <p>Thank you again for allowing us to serve you through music and prayer.<p>
-              <p>Warm blessings,</p>
-              <br/>
-              <p><strong>HeartPrayerMusic Creatives Team</strong></p>
-          `,
-    });
-    // emit updated queue
-    await emitLyricistQueue(req);
-
     res
       .status(201)
       .json({ message: "Saved", id: project._id, songcode: project.songcode });
@@ -431,8 +335,7 @@ router.get("/tracker", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    // const { status } = req.body;
-    // Extract fields from request body
+
     const {
       songtitle,
       lyrics,
@@ -447,18 +350,23 @@ router.put("/:id", async (req, res) => {
       assessor,
       assessor_end,
       status,
+      clearLock,
       ...otherUpdates
     } = req.body;
 
     // Build update object
     const updates = {
       ...otherUpdates,
-      lock: {
+    };
+
+    // Only clear lock on submit
+    if (clearLock) {
+      updates.lock = {
         _id: null,
         user: null,
         timestamp: null,
-      },
-    };
+      };
+    }
 
     if (songtitle !== undefined) updates.songtitle = songtitle;
     if (lyrics !== undefined) updates.lyrics = lyrics;
@@ -474,10 +382,11 @@ router.put("/:id", async (req, res) => {
     if (assessor_end !== undefined) updates.assessor_end = assessor_end;
     if (status !== undefined) updates.status = status;
 
-    const project = await Project.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
-    });
+    const project = await Project.findByIdAndUpdate(
+      id,
+      { $set: updates },
+      { new: true },
+    );
 
     // Send email to customer if status is Project Completed
 
@@ -547,6 +456,7 @@ router.get("/audioplayer/:publicId", async (req, res) => {
     res.json({
       filename: project.filename,
       recipient: project.recipient,
+      genre: project.genre,
     });
   } catch (err) {
     console.error(err);
@@ -568,7 +478,7 @@ router.post("/assign-lyricist", async (req, res) => {
 });
 
 router.post("/:id/lyricistclaim", async (req, res) => {
-  console.log("Lyricist claiming");
+  // console.log("Lyricist claiming");
   const { id } = req.params;
   const { username } = req.body;
 
@@ -627,7 +537,7 @@ router.post("/:id/lyricistclaim", async (req, res) => {
 
   if (!project) {
     const lockedProject = await Project.findById(id);
-    console.log("Didnt find project");
+    // console.log("Didnt find project");
 
     return res.status(409).json({
       message: "Project locked",
@@ -657,7 +567,7 @@ router.post("/assign-sa", async (req, res) => {
 });
 
 router.post("/:id/saclaim", async (req, res) => {
-  console.log("Song Artist claiming");
+  // console.log("Song Artist claiming");
   const { id } = req.params;
   const { username } = req.body;
 
@@ -716,7 +626,7 @@ router.post("/:id/saclaim", async (req, res) => {
 
   if (!project) {
     const lockedProject = await Project.findById(id);
-    console.log("Didnt find project");
+    // console.log("Didnt find project");
 
     return res.status(409).json({
       message: "Project locked",
@@ -792,7 +702,7 @@ router.post("/assign-qa", async (req, res) => {
 });
 
 router.post("/:id/qaclaim", async (req, res) => {
-  console.log("Assessor claiming");
+  // console.log("Assessor claiming");
   const { id } = req.params;
   const { username } = req.body;
 
@@ -824,7 +734,6 @@ router.post("/:id/qaclaim", async (req, res) => {
           },
 
           assessor_start: { $ifNull: ["$assessor_start", new Date()] },
-
           logs: {
             $cond: [
               { $ne: ["$assessor", username] },
@@ -851,7 +760,7 @@ router.post("/:id/qaclaim", async (req, res) => {
 
   if (!project) {
     const lockedProject = await Project.findById(id);
-    console.log("Didnt find project");
+    // console.log("Didnt find project");
 
     return res.status(409).json({
       message: "Project locked",
@@ -886,7 +795,7 @@ router.post("/:id/logs", async (req, res) => {
 router.post("/:id/heartbeat", async (req, res) => {
   const { id } = req.params;
   const { username } = req.body;
-  console.log("heartbeat...");
+  // console.log("heartbeat...");
 
   await Project.updateOne(
     {
@@ -902,6 +811,16 @@ router.post("/:id/heartbeat", async (req, res) => {
 
   res.json({ ok: true });
 });
+
+router.get("/:id/status", async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  res.json({ status: project.paymentStatus });
+});
+
+// router.get("/:id/status", (req, res) => {
+//   console.log("✅ STATUS ROUTE HIT", req.params.id);
+//   res.json({ status: "test" });
+// });
 
 // GET /api/projects/:id
 router.get("/:id", async (req, res) => {

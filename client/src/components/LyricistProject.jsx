@@ -210,7 +210,8 @@ export default function LyricistProject() {
           lyricist: user?.username,
           lyricist_end: lyricistEnd,
           status: "Queued for Song Artist",
-          lock: { _id: null, user: null, timestamp: null },
+          clearLock: true,
+          // lock: { _id: null, user: null, timestamp: null },
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );

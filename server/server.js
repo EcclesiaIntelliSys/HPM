@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -8,9 +9,11 @@ const http = require("http");
 const https = require("https");
 const { Server } = require("socket.io");
 
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config();
-}
+// if (process.env.NODE_ENV !== "production") {
+//   require("dotenv").config();
+// }
+const Stripe = require("stripe");
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 const authRoutes = require("./routes/auth");
 const protectedRoutes = require("./routes/protected");
@@ -29,6 +32,23 @@ const {
 const auth = require("./middleware/auth");
 
 const app = express();
+app.post(
+  "/api/payments/webhook",
+  express.raw({ type: "application/json" }),
+  require("./routes/paymentsWebhook"), // separate file
+);
+
+// /* ✅ ADD THIS FIRST (debug all incoming requests) */
+// app.use((req, res, next) => {
+//   console.log("🌐 INCOMING:", req.method, req.url);
+//   next();
+// });
+
+// app.post("/api/payments/webhook", (req, res) => {
+//   console.log("🔥 WEBHOOK HIT DIRECT SERVER");
+//   res.sendStatus(200);
+// });
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -128,7 +148,7 @@ server.listen(PORT, () => {
 
 /* -------------------- Cleanup Orphaned Locks -------------------- */
 setInterval(async () => {
-  console.log("server started orphan project cleanup");
+  // console.log("server started orphan project cleanup");
   await cleanupOrphan();
 
   const io = app.get("io");

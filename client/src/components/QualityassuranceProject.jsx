@@ -213,6 +213,7 @@ export default function QualityassuranceProject() {
           assessor: user?.username,
           assessor_end: assessorEnd,
           status: "Queued for Admin Review and Action",
+          clearLock: true,
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
