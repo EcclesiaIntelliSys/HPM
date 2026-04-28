@@ -817,11 +817,6 @@ router.get("/:id/status", async (req, res) => {
   res.json({ status: project.paymentStatus });
 });
 
-// router.get("/:id/status", (req, res) => {
-//   console.log("✅ STATUS ROUTE HIT", req.params.id);
-//   res.json({ status: "test" });
-// });
-
 // GET /api/projects/:id
 router.get("/:id", async (req, res) => {
   try {

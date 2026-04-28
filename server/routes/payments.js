@@ -78,10 +78,4 @@ router.get("/intent/:projectId", async (req, res) => {
   }
 });
 
-// router.post(
-//   "/webhook",
-//   express.raw({ type: "application/json" }),
-//   require("../routes/paymentsWebhook"),
-// );
-
 module.exports = router;

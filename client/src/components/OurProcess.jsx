@@ -17,7 +17,7 @@ export default function OurProcess({ id }) {
         />
 
         {/* Overlay content */}
-        <div className="relative z-10 flex flex-col items-center h-full space-y-8">
+        <div className="relative z-10 flex flex-col items-center h-full">
           <p className="mt-5 text-yellow-400 font-serif font-black text-center text-4xl tracking-tight">
             Your Custom Song in{" "}
             <span className="mogra-regular text-white text-5xl">3</span> Simple
@@ -57,7 +57,7 @@ export default function OurProcess({ id }) {
           {/* Button */}
           <button
             onClick={() => navigate("/create")}
-            className="my-2 bg-orange-800 hover:bg-rose-700 text-white px-5 py-6 rounded-md text-sm shadow-lg flex items-center gap-4"
+            className="mt-auto mb-6 bg-orange-800 hover:bg-rose-700 text-white px-5 py-6 rounded-md text-sm shadow-lg flex items-center gap-4"
           >
             <FaMusic className="w-4 h-4 text-white" />
             <span>I'm Ready. Let's Start !</span>

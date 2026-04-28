@@ -37,7 +37,6 @@ export default function CheckoutPage({ project }) {
     if (error) {
       setErrorMessage(error.message);
       setShowFailureModal(true);
-      setPaying(false);
       return;
     }
 
@@ -48,20 +47,34 @@ export default function CheckoutPage({ project }) {
   };
 
   const checkPaymentStatus = async () => {
-    for (let i = 0; i < 5; i++) {
-      const res = await fetch(`${API_BASE}/api/projects/${project._id}/status`);
-      const data = await res.json();
+    try {
+      for (let i = 0; i < 5; i++) {
+        const res = await fetch(
+          `${API_BASE}/api/projects/${project._id}/status`,
+        );
 
-      if (data.status === "paid") {
-        setPaying(false);
-        setShowSuccessModal(true);
-        return;
+        if (!res.ok) {
+          throw new Error("Failed to fetch payment status");
+        }
+
+        const data = await res.json();
+
+        if (data.status === "paid") {
+          setShowSuccessModal(true);
+          return;
+        }
+
+        await new Promise((r) => setTimeout(r, 1500));
       }
 
-      await new Promise((r) => setTimeout(r, 1500));
+      setErrorMessage("Payment not confirmed in time. Please refresh later.");
+      setShowFailureModal(true);
+    } catch (err) {
+      setErrorMessage(err.message || "Unknown error checking payment status");
+      setShowFailureModal(true);
+    } finally {
+      setPaying(false);
     }
-
-    setShowFailureModal(true);
   };
 
   return (

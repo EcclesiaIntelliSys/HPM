@@ -11,6 +11,7 @@ import MenuNav from "./components/MenuNav";
 import OurProcess from "./components/OurProcess";
 import SampleAudio from "./components/SampleAudio";
 import Market from "./components/Market";
+import Features from "./components/Features";
 import Footer from "./components/Footer";
 import SongSurvey from "./components/SongSurvey";
 import CheckoutPage from "./components/CheckoutPage";
@@ -89,7 +90,9 @@ export default function App() {
           <Market />
           <OurProcess id="ourprocess-section" />
           <SampleAudio id="sampleaudio-section" />
+          <Features id="features-section" />
           <OrderTracker id="ordertracker-section" />
+
           <Footer />
         </div>
       ),

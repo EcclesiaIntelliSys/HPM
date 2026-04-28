@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
       const paymentIntent = event.data.object;
       const projectId = paymentIntent.metadata.projectId;
       if (!projectId) {
-        // console.error("❌ Missing projectId in metadata");
+        console.error("❌ Missing projectId in metadata");
         return res.sendStatus(200);
       }
 
@@ -92,7 +92,7 @@ module.exports = async (req, res) => {
                   : "your scheduled delivery date"
               }</strong>. You may track the status of your custom song by referencing Song Code # <strong style="text-decoration: underline;">${project.songcode}</strong>.</p>
           <br></br>
-                    <div className="w-3/4 shadow-md py-8 px-14 bg-gray-100 text-sm font-mono border-2 border-gray-200 carrois-gothic-sc-regular">
+                    <div className="w-3/4 shadow-md py-8 px-14 bg-gray-100 text-sm font-montserrat border-2 border-gray-200">
             <div className="my-0">
               <p className="text-center font-black">
                 <strong>CUSTOM SONG SPECIFICATION</strong>
@@ -115,38 +115,38 @@ module.exports = async (req, res) => {
                 .
               </p>
               <div className="flex text-md gap-5">
-                <span className="w-1/4 text-right">Special Qualities :</span>
-                <strong><span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
+                <strong><span className="w-1/4 text-right">Special Qualities :</span></strong>
+                <span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
                   ${project.qualities}
-                </span></strong>
+                </span>
               </div>
               <div className="flex text-md gap-5">
-                <span className="w-1/4 text-right">Memorable Moments :</span>
-                <strong><span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
+                <strong><span className="w-1/4 text-right">Memorable Moments :</span></strong>
+                <span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
                   ${project.moment}
-                </span></strong>
+                </span>
               </div>
               <div className="flex text-md gap-5">
-                <span className="w-1/4 text-right">
+                <strong><span className="w-1/4 text-right">
                   What This Song Should Say :
-                </span>
-                <strong><span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
+                </span></strong>
+                <span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
                   ${project.specialmsg}
-                </span></strong>
-              </div>
-              <div className="flex text-md gap-5">
-                <span className="w-1/4 text-right">Song Style / Genre :</span>
-                <strong><span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
-                  ${project.genre}
-                </span></strong>
-              </div>
-              <div className="flex text-md gap-5">
-                <span className="w-1/4 text-right">
-                  Preferred Voice Gender :
                 </span>
-                <strong><span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
-                  ${project.voice}
+              </div>
+              <div className="flex text-md gap-5">
+                <strong><span className="w-1/4 text-right">Song Style / Genre :</span></strong>
+                <span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
+                  ${project.genre}
+                </span>
+              </div>
+              <div className="flex text-md gap-5">
+                <strong><span className="w-1/4 text-right">
+                  Preferred Voice Gender :
                 </span></strong>
+                <span className="w-3/4 text-blue-800 text-left border-2 px-1 font-semibold text-blue-800 font-montserrat">
+                  ${project.voice}
+                </span>
               </div>
               <br/><br/>
               <p>Thank you again for allowing us to serve you through music and prayer.<p>

@@ -29,7 +29,7 @@ async function requeueProjects({
   const result = await Project.updateMany(
     {
       status,
-      "lock.timestamp": { $lte: expiry },
+      "lock.timestamp": { $lte: expiry }, //A project will be requeued if last heartbeat is older than lock expiration
     },
     {
       $set: {

@@ -38,17 +38,6 @@ app.post(
   require("./routes/paymentsWebhook"), // separate file
 );
 
-// /* ✅ ADD THIS FIRST (debug all incoming requests) */
-// app.use((req, res, next) => {
-//   console.log("🌐 INCOMING:", req.method, req.url);
-//   next();
-// });
-
-// app.post("/api/payments/webhook", (req, res) => {
-//   console.log("🔥 WEBHOOK HIT DIRECT SERVER");
-//   res.sendStatus(200);
-// });
-
 app.use(express.json());
 app.use(cookieParser());
 

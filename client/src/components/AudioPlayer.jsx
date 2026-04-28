@@ -46,10 +46,10 @@ export default function AudioPlayer() {
     "Rap / Hip-hop": "/images/rap.png",
     Electronic: "/images/electronic.png",
     Reggae: "/images/reggae.png",
-    "Indie Pop Rock": "/images/generic.png",
-    "Latin-Inspired": "/images/generic.png",
-    Chorale: "/images/generic.png",
-    "Cinematic / Epic": "/images/generic.png",
+    "Indie Pop Rock": "/images/rocker.png",
+    "Latin-Inspired": "/images/latino.png",
+    Chorale: "/images/chorale.png",
+    "Cinematic / Epic": "/images/epicsong.png",
   };
   const artwork = genreImages[project?.genre] || "/images/generics.png";
 

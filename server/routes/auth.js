@@ -5,6 +5,7 @@ const multer = require("multer");
 const User = require("../models/User"); // your user model
 const Voucher = require("../models/Voucher");
 const transporter = require("../utils/mailer");
+
 // const { cleanupOrphan } = require("../utils/cleanupOrphan");
 const { cleanupOrphan } = require("../utils/cleanupOrphan");
 
@@ -28,10 +29,19 @@ const upload = multer({ storage });
 const isProd = process.env.NODE_ENV === "production";
 
 // Public login route
+const { getConfig } = require("../utils/config");
+const ms = require("ms");
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   try {
+    const config = await getConfig();
+    if (!ms(config.accessTokenAge) || !ms(config.refreshTokenAge)) {
+      throw new Error("Invalid token duration in opsconfig");
+    }
+
+    const accessAge = config.accessTokenAge; // "10m"
+    const refreshAge = config.refreshTokenAge; // "7d"
     const user = await User.findOne({ username });
     if (!user) return res.status(400).json({ msg: "Invalid credentials" });
 
@@ -48,13 +58,15 @@ router.post("/login", async (req, res) => {
     const token = jwt.sign(
       { id: user._id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "10m" }, // short-lived
+      // { expiresIn: "10m" }, // short-lived
+      { expiresIn: accessAge }, // short-lived
     );
     // ✅ Issue long-lived refresh token
     const refreshToken = jwt.sign(
       { id: user._id, username: user.username },
       process.env.REFRESH_SECRET,
-      { expiresIn: "7d" }, // long-lived
+      // { expiresIn: "7d" }, // long-lived
+      { expiresIn: refreshAge }, // long-lived
     );
 
     // HASH the refresh token
@@ -73,12 +85,17 @@ router.post("/login", async (req, res) => {
       secure: true,
       sameSite: isProd ? "none" : "lax",
       path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      // maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: ms(refreshAge),
     });
-    console.log("Refresh cookie set:", refreshToken);
+    // console.log("Refresh cookie set:", refreshToken);
     // ✅ Send access token to frontend
-    console.log(Date.now() + " I just issued token: " + token);
-    console.log(Date.now() + " I just issued refreshtoken: " + refreshToken);
+    // console.log(
+    //   Date.now() + " I just issued access token upon login: " + token,
+    // );
+    // console.log(
+    //   Date.now() + " I just issued refreshtoken upon login: " + refreshToken,
+    // );
 
     res.json({ token });
   } catch (err) {
@@ -237,6 +254,12 @@ router.delete("/delete-unverified/:token", async (req, res) => {
 
 router.get("/refresh", async (req, res) => {
   // console.log("🔥 REFRESH ROUTE HIT");
+
+  const config = await getConfig();
+
+  if (!ms(config.accessTokenAge) || !ms(config.refreshTokenAge)) {
+    throw new Error("Invalid token duration in opsconfig");
+  }
   const oldRefreshToken = req.cookies.refreshToken;
 
   if (!oldRefreshToken) {
@@ -278,7 +301,8 @@ router.get("/refresh", async (req, res) => {
     const newRefreshToken = jwt.sign(
       { id: user._id },
       process.env.REFRESH_SECRET,
-      { expiresIn: "7d" },
+      // { expiresIn: "7d" },
+      { expiresIn: config.refreshTokenAge },
     );
 
     const newHashedToken = await bcrypt.hash(newRefreshToken, 10);
@@ -293,7 +317,8 @@ router.get("/refresh", async (req, res) => {
     const newAccessToken = jwt.sign(
       { id: user._id, username: user.username, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "10m" },
+      // { expiresIn: "10m" },
+      { expiresIn: config.accessTokenAge },
     );
 
     // console.log("New access token issued: " + newAccessToken);
@@ -305,7 +330,8 @@ router.get("/refresh", async (req, res) => {
       secure: true,
       sameSite: isProd ? "none" : "lax",
       path: "/",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      // maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: ms(config.refreshTokenAge),
     });
 
     res.json({ token: newAccessToken });

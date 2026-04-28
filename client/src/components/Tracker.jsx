@@ -115,7 +115,7 @@ export default function Market({ id }) {
 
   return (
     <div id={id} className="max-w-6xl mx-auto">
-      <div className="relative w-full h-auto overflow-hidden shadow-md bg-gray-100 px-6 py-4">
+      <div className="relative w-full h-auto overflow-hidden shadow-md bg-olive-100 px-6 py-4">
         <p className="text-olive-900 font-serif font-bold text-center text-2xl mb-6">
           Track My Custom Song Order
         </p>
@@ -137,7 +137,7 @@ export default function Market({ id }) {
               <p className="text-red-500 text-xs mt-1">{errors.email}</p>
             )}
             {!errors.email && (
-              <p className="font-thin italic font-mono text-blue-500 text-xs mt-1 tracking-tight">
+              <p className="font-thin italic font-mono text-blue-800 text-xs mt-1 tracking-tight">
                 * The email you indicated in your order.
               </p>
             )}
@@ -188,7 +188,7 @@ export default function Market({ id }) {
               <p className="text-red-500 text-xs mt-1">{errors.songCode}</p>
             )}
             {!errors.songCode && (
-              <p className="font-thin italic font-mono text-blue-500 text-xs mt-1 tracking-tight">
+              <p className="font-thin italic font-mono text-blue-800 text-xs mt-1 tracking-tight">
                 * The Song Code given with your order confirmation email.
               </p>
             )}
