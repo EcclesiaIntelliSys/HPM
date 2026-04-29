@@ -22,6 +22,10 @@ if (!stripeKey) {
 const Stripe = require("stripe");
 const stripe = Stripe(stripeKey);
 
+console.log("Stripe key:", process.env.STRIPE_SECRET_KEY);
+console.log("Type:", typeof process.env.STRIPE_SECRET_KEY);
+console.log("Length:", process.env.STRIPE_SECRET_KEY?.length);
+
 const authRoutes = require("./routes/auth");
 const protectedRoutes = require("./routes/protected");
 const paymentRoutes = require("./routes/payments");

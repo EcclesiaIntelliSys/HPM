@@ -14,12 +14,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js (with cache)
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: "npm"
-          cache-dependency-path: client/package-lock.json
+
+      - name: Cache npm (client)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            client/node_modules
+          key: ${{ runner.os }}-node18-client-${{ hashFiles('client/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node18-client-
 
       # ✅ MUST COME BEFORE ANY SSH
       - name: Setup SSH key
@@ -31,11 +39,15 @@ jobs:
         run: |
           cd client
           npm ci
-          REACT_APP_API_URL=https://heartprayermusic.com \
-          REACT_APP_R2_PUBLIC_URL=https://creatives.heartprayermusic.com \
-          REACT_APP_STRIPE_PUBLIC_KEY=${{ secrets.REACT_APP_STRIPE_PUBLIC_KEY }} \
-          npm run build
 
+          export NODE_OPTIONS="--max_old_space_size=4096"
+          export GENERATE_SOURCEMAP=false
+
+          export REACT_APP_API_URL=https://heartprayermusic.com
+          export REACT_APP_R2_PUBLIC_URL=https://creatives.heartprayermusic.com
+          export REACT_APP_STRIPE_PUBLIC_KEY=${{ secrets.REACT_APP_STRIPE_PUBLIC_KEY }}
+
+          npm run build
       - name: Ensure server directories exist
         run: |
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
