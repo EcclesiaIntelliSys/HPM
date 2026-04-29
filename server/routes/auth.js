@@ -89,7 +89,7 @@ router.post("/login", async (req, res) => {
       maxAge: ms(refreshAge),
     });
     // console.log("Refresh cookie set:", refreshToken);
-    // ✅ Send access token to frontend
+    // Send access token to frontend
     // console.log(
     //   Date.now() + " I just issued access token upon login: " + token,
     // );
