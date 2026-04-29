@@ -65,7 +65,7 @@ jobs:
       # ✅ Safer .env creation (no quoted EOF)
       - name: Create .env file on EC2
         run: |
-          ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
+          ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} '
           cat > /home/ubuntu/app/server/.env << EOF
           NODE_ENV=production
           PORT=5000
@@ -86,7 +86,7 @@ jobs:
           STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
           EOF
           chmod 600 /home/ubuntu/app/server/.env
-          "
+          '
 
       - name: Install server dependencies & restart app
         run: |
