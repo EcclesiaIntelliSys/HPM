@@ -76,7 +76,7 @@ jobs:
           TITAN_PASS=${{ secrets.TITAN_PASS }}
           TITAN_HOST=${{ secrets.TITAN_HOST }}
           TITAN_PORT=587
-          TITAN_FROM=\"HeartPrayerMusic\" <info@heartprayermusic.com>
+          TITAN_FROM="HeartPrayerMusic <info@heartprayermusic.com>"
           FRONTEND_URL=https://heartprayermusic.com
           R2_BUCKET=${{ secrets.R2_BUCKET }}
           R2_ENDPOINT=${{ secrets.R2_ENDPOINT }}
@@ -93,7 +93,7 @@ jobs:
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
             cd /home/ubuntu/app/server &&
             npm ci --omit=dev &&
-            pm2 startOrReload /home/ubuntu/app/ecosystem.config.js || exit 1 &&
+            pm2 startOrReload /home/ubuntu/app/ecosystem.config.js --update-env || exit 1 &&
             pm2 save &&
             sudo systemctl restart nginx
           "

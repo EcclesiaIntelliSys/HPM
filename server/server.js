@@ -12,8 +12,15 @@ const { Server } = require("socket.io");
 // if (process.env.NODE_ENV !== "production") {
 //   require("dotenv").config();
 // }
+
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+if (!stripeKey) {
+  throw new Error("Missing STRIPE_SECRET_KEY");
+}
+
 const Stripe = require("stripe");
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = Stripe(stripeKey);
 
 const authRoutes = require("./routes/auth");
 const protectedRoutes = require("./routes/protected");
