@@ -90,12 +90,12 @@ router.post("/login", async (req, res) => {
     });
     // console.log("Refresh cookie set:", refreshToken);
     // Send access token to frontend
-    // console.log(
-    //   Date.now() + " I just issued access token upon login: " + token,
-    // );
-    // console.log(
-    //   Date.now() + " I just issued refreshtoken upon login: " + refreshToken,
-    // );
+    console.log(
+      Date.now() + " I just issued access token upon login: " + token,
+    );
+    console.log(
+      Date.now() + " I just issued refreshtoken upon login: " + refreshToken,
+    );
 
     res.json({ token });
   } catch (err) {
@@ -321,7 +321,7 @@ router.get("/refresh", async (req, res) => {
       { expiresIn: config.accessTokenAge },
     );
 
-    // console.log("New access token issued: " + newAccessToken);
+    console.log("New access token issued: " + newAccessToken);
 
     // Send rotated refresh token in cookie
 
@@ -337,7 +337,7 @@ router.get("/refresh", async (req, res) => {
     res.json({ token: newAccessToken });
     // Run cleanup in background
     cleanupOrphan().catch((err) => console.error("Cleanup error:", err));
-    // console.log("New refresh token issued: " + newRefreshToken);
+    console.log("New refresh token issued: " + newRefreshToken);
   } catch (err) {
     console.error("Refresh error:", err);
     res.status(401).json({ error: "Invalid refresh token" });

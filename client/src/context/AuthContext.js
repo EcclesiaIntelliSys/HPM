@@ -7,125 +7,152 @@ export const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(null);
-  // Prevent repeated failed refresh attempts
   const [refreshing, setRefreshing] = useState(false);
 
-  // ✅ Interceptor for reactive refresh
-  api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-      const originalRequest = error.config;
+  // =========================
+  // 1. RESTORE AUTH HEADER
+  // =========================
+  useEffect(() => {
+    if (token) {
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete api.defaults.headers.common["Authorization"];
+    }
+  }, [token]);
 
-      if (
-        error.response?.status === 401 &&
-        !originalRequest._retry &&
-        !originalRequest.url.includes("/api/auth/refresh") &&
-        !refreshing
-      ) {
-        originalRequest._retry = true;
-        // console.log(
-        //   `[${new Date().toISOString()}] Access token expired. Attempting refresh...`,
-        // );
-        setRefreshing(true);
-        try {
-          const res = await api.get("/api/auth/refresh");
-          const newToken = res.data.token;
+  // =========================
+  // 2. REQUEST INTERCEPTOR (SAFETY NET)
+  // =========================
+  useEffect(() => {
+    const reqInterceptor = api.interceptors.request.use((config) => {
+      const storedToken = localStorage.getItem("token");
 
-          login(newToken);
-          // console.log(
-          //   `[${new Date().toISOString()}] Refresh succeeded. New token issued.`,
-          // );
-
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          setRefreshing(false);
-          return api(originalRequest);
-        } catch (refreshErr) {
-          console.error(
-            `[${new Date().toISOString()}] Silent refresh failed:`,
-            refreshErr.message,
-          );
-          setRefreshing(false);
-          logout();
-          return Promise.reject(refreshErr); // important
-        }
+      if (storedToken) {
+        config.headers.Authorization = `Bearer ${storedToken}`;
       }
 
-      return Promise.reject(error);
-    },
-  );
+      return config;
+    });
 
-  // ✅ Decode user info + proactive refresh timer
+    return () => {
+      api.interceptors.request.eject(reqInterceptor);
+    };
+  }, []);
+
+  // =========================
+  // 3. RESPONSE INTERCEPTOR (REFRESH LOGIC)
+  // =========================
+  useEffect(() => {
+    const resInterceptor = api.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+
+        if (
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          !originalRequest.url.includes("/api/auth/refresh") &&
+          !refreshing
+        ) {
+          originalRequest._retry = true;
+          setRefreshing(true);
+
+          try {
+            const res = await api.get("/api/auth/refresh");
+            const newToken = res.data.token;
+
+            login(newToken);
+
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+
+            setRefreshing(false);
+            return api(originalRequest);
+          } catch (refreshErr) {
+            console.error("Refresh failed:", refreshErr.message);
+            setRefreshing(false);
+            logout();
+            return Promise.reject(refreshErr);
+          }
+        }
+
+        return Promise.reject(error);
+      },
+    );
+
+    return () => {
+      api.interceptors.response.eject(resInterceptor);
+    };
+  }, [refreshing]);
+
+  // =========================
+  // 4. TOKEN DECODE + AUTO REFRESH TIMER
+  // =========================
   useEffect(() => {
     if (!token) return;
+
     try {
       const decoded = jwtDecode(token);
+
       setUser({
         id: decoded.id,
         username: decoded.username,
         role: decoded.role,
       });
-      const expiryTime = decoded.exp * 1000; // ms
+
+      const expiryTime = decoded.exp * 1000;
       const now = Date.now();
+
       if (now >= expiryTime) {
-        // console.log(
-        //   `[${new Date().toISOString()}] Token already expired. Logging out.`,
-        // );
         logout();
-      } else {
-        // Try to refresh 1 minute before expiry
-        let refreshTime = expiryTime - now - 60 * 1000; // Fallback: if lifespan < 1m, refresh 5s before expiry
-        if (refreshTime <= 0) {
-          refreshTime = expiryTime - now - 5000;
-        }
-        // console.log(
-        //   `[${new Date().toISOString()}] Proactive refresh scheduled in ${Math.round(refreshTime / 1000)} seconds.`,
-        // );
-        const timer = setTimeout(async () => {
-          // console.log(
-          //   `[${new Date().toISOString()}] Proactive refresh triggered.`,
-          // );
-          try {
-            const res = await api.get("/api/auth/refresh");
-            const newToken = res.data.token;
-            login(newToken);
-            // console.log(
-            //   `[${new Date().toISOString()}] Proactive refresh succeeded. New token issued.`,
-            // );
-          } catch (err) {
-            console.error(
-              `[${new Date().toISOString()}] Proactive refresh failed:`,
-              err.message,
-            );
-            logout();
-          }
-        }, refreshTime);
-        return () => clearTimeout(timer);
+        return;
       }
+
+      let refreshTime = expiryTime - now - 60 * 1000;
+      if (refreshTime <= 0) refreshTime = expiryTime - now - 5000;
+
+      const timer = setTimeout(async () => {
+        try {
+          const res = await api.get("/api/auth/refresh");
+          const newToken = res.data.token;
+          login(newToken);
+        } catch (err) {
+          logout();
+        }
+      }, refreshTime);
+
+      return () => clearTimeout(timer);
     } catch (err) {
-      console.error(
-        `[${new Date().toISOString()}] Token decode failed:`,
-        err.message,
-      );
       logout();
     }
   }, [token]);
 
+  // =========================
+  // 5. LOGIN
+  // =========================
   const login = (newToken) => {
     localStorage.setItem("token", newToken);
     setToken(newToken);
+
     api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
   };
 
+  // =========================
+  // 6. LOGOUT
+  // =========================
   const logout = async () => {
     try {
-      await api.post("/api/auth/logout"); // backend clears refreshToken cookie
+      await api.post("/api/auth/logout");
     } catch (err) {
       console.error("Logout error:", err);
     }
+
     localStorage.removeItem("token");
     setToken(null);
     setUser(null);
-    window.location.href = "/creatives"; // redirect to login
+
+    delete api.defaults.headers.common["Authorization"];
+
+    window.location.href = "/creatives";
   };
 
   return (
