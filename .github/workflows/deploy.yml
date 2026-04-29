@@ -8,38 +8,45 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node.js
+      - name: Setup Node.js (with cache)
         uses: actions/setup-node@v3
         with:
           node-version: 18
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
 
-      - name: Install client dependencies & build
-        run: |
-          cd client
-          npm ci
-          # Inject API base for production build using your domain
-          REACT_APP_API_URL="https://heartprayermusic.com" npm run build
-
+      # ✅ MUST COME BEFORE ANY SSH
       - name: Setup SSH key
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2-key.pem
           chmod 400 ec2-key.pem
 
-      - name: Ensure /var/www/app exists with correct ownership
+      - name: Install client dependencies & build
+        run: |
+          cd client
+          npm ci
+          REACT_APP_API_URL=https://heartprayermusic.com \
+          REACT_APP_R2_PUBLIC_URL=https://creatives.heartprayermusic.com \
+          REACT_APP_STRIPE_PUBLIC_KEY=${{ secrets.REACT_APP_STRIPE_PUBLIC_KEY }} \
+          npm run build
+
+      - name: Ensure server directories exist
         run: |
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
-            sudo mkdir -p /var/www/app &&
+            mkdir -p /home/ubuntu/app/server &&
+            mkdir -p /var/www/app &&
+            sudo chown -R ubuntu:ubuntu /home/ubuntu/app &&
             sudo chown -R ubuntu:ubuntu /var/www/app
           "
 
       - name: Rsync server + client build to EC2
         run: |
-          # Sync backend code to /home/ubuntu/app
           rsync -avz --delete \
             --exclude 'node_modules' \
             --exclude '.git' \
@@ -50,17 +57,43 @@ jobs:
             -e "ssh -i ec2-key.pem -o StrictHostKeyChecking=no" \
             ./server ./ecosystem.config.js ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app
 
-          # Sync frontend build to /var/www/app, excluding public assets
           rsync -avz --delete \
             --exclude 'videos' \
             -e "ssh -i ec2-key.pem -o StrictHostKeyChecking=no" \
             ./client/build/ ubuntu@${{ secrets.EC2_HOST }}:/var/www/app/
 
+      # ✅ Safer .env creation (no quoted EOF)
+      - name: Create .env file on EC2
+        run: |
+          ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
+          cat > /home/ubuntu/app/server/.env << EOF
+          NODE_ENV=production
+          PORT=5000
+          MONGO_URI=${{ secrets.MONGO_URI }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          REFRESH_SECRET=${{ secrets.REFRESH_SECRET }}
+          TITAN_USER=${{ secrets.TITAN_USER }}
+          TITAN_PASS=${{ secrets.TITAN_PASS }}
+          TITAN_HOST=${{ secrets.TITAN_HOST }}
+          TITAN_PORT=587
+          TITAN_FROM=\"HeartPrayerMusic\" <info@heartprayermusic.com>
+          FRONTEND_URL=https://heartprayermusic.com
+          R2_BUCKET=${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT=${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY=${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY=${{ secrets.R2_SECRET_KEY }}
+          STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          EOF
+          chmod 600 /home/ubuntu/app/server/.env
+          "
+
       - name: Install server dependencies & restart app
         run: |
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
-            cd /home/ubuntu/app/server && npm ci --production &&
-            pm2 startOrReload /home/ubuntu/app/ecosystem.config.js --env production &&
+            cd /home/ubuntu/app/server &&
+            npm ci --omit=dev &&
+            pm2 startOrReload /home/ubuntu/app/ecosystem.config.js || exit 1 &&
             pm2 save &&
             sudo systemctl restart nginx
           "
@@ -69,6 +102,12 @@ jobs:
         run: |
           ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
             curl -f http://localhost:5000/api/health || exit 1
+          "
+
+      - name: Health check frontend (full site)
+        run: |
+          ssh -i ec2-key.pem -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
+            curl -f https://heartprayermusic.com || exit 1
           "
 
       - name: Health check frontend API proxy
