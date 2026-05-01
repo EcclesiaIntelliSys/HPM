@@ -15,7 +15,7 @@ export default function SongDetails() {
   const [project, setProject] = useState(null);
   const [dispo, setDispo] = useState("");
   const [dispo_remarks, setDispo_remarks] = useState("");
-
+  const [admin_remarks, setAdmin_remarks] = useState("");
   const [loading, setLoading] = useState(true);
   const [lockedInfo, setLockedInfo] = useState(false);
   const [config, setConfig] = useState(null);
@@ -144,6 +144,13 @@ export default function SongDetails() {
     return () => clearInterval(interval);
   }, [project, config]);
 
+  useEffect(() => {
+    //display whatever previous Song Artist have contributed.
+    if (project) {
+      setAdmin_remarks(project.admin_remarks || "");
+    }
+  }, [project]);
+
   // Add log entry
   const handleAddLog = async () => {
     if (!newLogMessage.trim()) return;
@@ -227,6 +234,13 @@ export default function SongDetails() {
         admin: user?.username,
         admin_action: adminActionText,
         admin_action_date: adminActionDate,
+        admin_remarks:
+          "[" +
+          new Date().toISOString() +
+          " - " +
+          (user?.username || "Unknown") +
+          "] " +
+          admin_remarks,
         status,
       };
 
@@ -235,31 +249,50 @@ export default function SongDetails() {
         payload.lyricist = null;
         payload.lyricist_start = null;
         payload.lyricist_end = null;
+        payload.songtitle = null;
+        payload.songtitlerev = null;
+        payload.lyrics = null;
+        payload.lyricsrev = null;
         payload.songartist = null;
         payload.songartist_start = null;
         payload.songartist_end = null;
         payload.assessor = null;
         payload.assessor_start = null;
         payload.assessor_end = null;
+        payload.filename = null;
+        payload.dispo = null;
+        payload.dispo_remarks = null;
       }
 
       if (action === "requeue_songartist") {
         payload.songartist = null;
         payload.songartist_start = null;
         payload.songartist_end = null;
+        payload.songtitlerev = null;
+        payload.lyricsrev = null;
         payload.assessor = null;
         payload.assessor_start = null;
         payload.assessor_end = null;
+        payload.assessor_end = null;
+        payload.filename = null;
+        payload.dispo = null;
+        payload.dispo_remarks = null;
       }
 
       if (action === "requeue_qa") {
         payload.assessor = null;
         payload.assessor_start = null;
         payload.assessor_end = null;
+        payload.dispo = null;
+        payload.dispo_remarks = null;
       }
 
       // Add log entry
-      const message = "Admin Actions: " + adminActionText;
+      const message =
+        "Admin Actions: " +
+        adminActionText +
+        ". Admin Remarks: " +
+        admin_remarks;
 
       const logEntry = {
         timestamp: adminActionDate,
@@ -703,13 +736,21 @@ export default function SongDetails() {
               <option value="cancel">Cancel Project</option>
             </select>
           </div>
+          <textarea
+            type="text"
+            value={admin_remarks}
+            onChange={(e) => setAdmin_remarks(e.target.value)}
+            className="w-full h-40 border p-2 text-sm"
+            placeholder="Input Your Remarks"
+          />
+
           {/* Submit Project */}
           <button
             onClick={() => setShowSubmitModal(true)}
-            disabled={!action}
+            disabled={!action || !admin_remarks}
             className={`relative inline-flex items-center justify-center text-sm mt-4 px-4 py-2 rounded min-w-[140px] 
     ${
-      !action
+      !action || !admin_remarks
         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
         : "bg-purple-600 text-white hover:bg-purple-700"
     }`}

@@ -69,6 +69,7 @@ const ProjectSchema = new mongoose.Schema(
     lyricsrev: { type: String },
     dispo: { type: String },
     dispo_remarks: { type: String },
+    admin_remarks: { type: String },
     lock: {
       user: String,
       timestamp: Date,
