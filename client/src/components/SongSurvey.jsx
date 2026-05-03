@@ -643,7 +643,7 @@ export default function SongRequestForm() {
               required
               aria-invalid={isMomentError}
               aria-describedby={isMomentError ? "moment-error" : undefined}
-              placeholder="Hint: These can be big milestones or small everyday moments—anything that feels meaningful to you. A moment with them you’ll never forget, a shared adventure, or even a quiet memory that means a lot."
+              placeholder="Hint: These can be big milestones or small everyday moments—anything that feels meaningful to you. A moment with them you’ll never forget, a shared adventure, an inside joke, or even a quiet memory that means a lot."
               maxLength={1000} // ✅ enforce max length
             />
           </label>

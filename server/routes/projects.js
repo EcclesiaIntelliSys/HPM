@@ -487,6 +487,7 @@ router.post("/:id/lyricistclaim", async (req, res) => {
   const project = await Project.findOneAndUpdate(
     {
       _id: id,
+      status: "Queued for Lyricist",
       $or: [
         {
           $or: [
@@ -576,6 +577,7 @@ router.post("/:id/saclaim", async (req, res) => {
   const project = await Project.findOneAndUpdate(
     {
       _id: id,
+      status: "Queued for Song Artist",
       $or: [
         {
           $or: [
@@ -711,6 +713,7 @@ router.post("/:id/qaclaim", async (req, res) => {
   const project = await Project.findOneAndUpdate(
     {
       _id: id,
+      status: "Queued for Quality Assurance",
       $or: [
         {
           $or: [
