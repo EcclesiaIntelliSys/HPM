@@ -904,7 +904,7 @@ export default function SongRequestForm() {
                 </div>
                 <hr></hr>
                 <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
-                  <span>Less: Introductory Discount:</span>
+                  <span>Less: Promo Discount:</span>
                   <span className="justify-end text-red-900 font-black">
                     (${INTRO_DISC})
                   </span>

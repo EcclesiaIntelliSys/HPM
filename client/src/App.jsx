@@ -33,6 +33,7 @@ import AudioPlayer from "./components/AudioPlayer";
 import OrderTracker from "./components/Tracker";
 import CheckoutWrapper from "./components/CheckoutWrapper";
 import SuccessPage from "./components/SuccessPage";
+import PromoBanner from "./components/PromoBanner";
 
 import { useNavigate } from "react-router-dom";
 
@@ -84,6 +85,7 @@ export default function App() {
       path: "/",
       element: (
         <div className="min-h-screen bg-sand-100 text-olive-900">
+          <PromoBanner />
           <Banner />
           <Carousel />
           <MenuNav />

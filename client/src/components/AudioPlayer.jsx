@@ -500,7 +500,7 @@ export default function AudioPlayer() {
             onClick={() => skipTime(-10)}
             className="w-10 h-10 flex items-center justify-center"
           >
-            |◄
+            <span className="inline-block transform rotate-180">▶|</span>
           </button>
           <button
             onClick={togglePlay}
