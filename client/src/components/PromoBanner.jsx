@@ -8,10 +8,8 @@ export default function PromoBanner() {
 
   // 🔒 Persist dismiss state
   useEffect(() => {
-    const dismissedDate = localStorage.getItem("mdBannerDismissed");
-    const today = new Date().toDateString();
-
-    if (dismissedDate === today) {
+    const dismissed = sessionStorage.getItem("mdBannerDismissed");
+    if (dismissed) {
       setIsVisible(false);
     }
   }, []);
@@ -42,12 +40,12 @@ export default function PromoBanner() {
   }, []);
 
   const handleDismiss = () => {
-    localStorage.setItem("mdBannerDismissed", new Date().toDateString());
+    sessionStorage.setItem("mdBannerDismissed", "true");
     setIsVisible(false);
   };
+  if (!isVisible) return null;
   if (new Date() > new Date("2026-05-09T23:59:59")) {
     return null;
-    if (!isVisible) return null;
   }
 
   return (
@@ -63,7 +61,10 @@ export default function PromoBanner() {
       >
         {/* ❌ Close Button (absolute so it doesn't break centering) */}
         <button
-          onClick={handleDismiss}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDismiss();
+          }}
           className="absolute right-4 text-olive-700 hover:text-black text-lg font-bold"
           aria-label="Close banner"
         >

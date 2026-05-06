@@ -9,8 +9,6 @@ import { GiCheckMark } from "react-icons/gi";
 import Modal from "./Modal.jsx";
 
 const API_BASE = process.env.REACT_APP_API_URL || "";
-const REG_PRICE = 100;
-const INTRO_DISC = 15;
 
 const OPTIONS_genre = [
   "Worship",
@@ -97,6 +95,9 @@ export default function SongRequestForm() {
   // if (submitting) return;
   // setSubmitting(true);
 
+  const [config, setConfig] = useState(null);
+  const [configLoaded, setConfigLoaded] = useState(false);
+
   const [step, setStep] = useState(1);
   const [changingStep, setChangingStep] = useState(false);
 
@@ -162,6 +163,9 @@ export default function SongRequestForm() {
       voucherError = "Voucher already claimed";
     }
   }
+
+  const REG_PRICE = config?.songPrice || 0;
+  const INTRO_DISC = config?.introDiscount || 0;
   const voucherDisc =
     ((matchedVoucher ? matchedVoucher.discount : 0) / 100) * REG_PRICE;
   const nett = REG_PRICE - INTRO_DISC - voucherDisc;
@@ -198,9 +202,6 @@ export default function SongRequestForm() {
         // form.voucherNo.trim() !== ""
       );
 
-    // if (s === 1) return form.genre !== "";
-    // if (s === 2) return form.whoFor.trim() !== "" && form.description.trim() !== "";
-    // if (s === 3) return form.otherMessage.trim() !== "" && /\S+@\S+\.\S+/.test(form.email);
     return false;
   };
 
@@ -258,19 +259,6 @@ export default function SongRequestForm() {
       setStatus("Error saving: " + err.message);
     } finally {
       setLoading(false);
-      // setForm({
-      //   relation: "",
-      //   recipient: "",
-      //   agegroup: "",
-      //   qualities: "",
-      //   moment: "",
-      //   specialmsg: "",
-      //   genre: "",
-      //   voice: "",
-      //   email: "",
-      //   ack: false,
-      //   voucherNo: "",
-      // });
     }
   };
 
@@ -304,6 +292,17 @@ export default function SongRequestForm() {
   const otherRef = useRef(null);
   const rafId = useRef(null);
   const emailRef = useRef(null);
+
+  //Load operational config values from DB
+  useEffect(() => {
+    fetch(`${API_BASE}/api/opsconfig/client-config`)
+      .then((res) => res.json())
+      .then((cfg) => {
+        setConfig(cfg);
+        setConfigLoaded(true);
+      })
+      .catch(() => setConfigLoaded(true));
+  }, []);
 
   useEffect(() => {
     if (form.relation === "Other") {

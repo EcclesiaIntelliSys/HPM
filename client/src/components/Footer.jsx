@@ -45,7 +45,7 @@ export default function Footer() {
           )}{" "}
           {/* YouTube */}
           <a
-            href="https://www.youtube.com/your-channel"
+            href="https://www.youtube.com/@heartprayermusic"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="YouTube"
@@ -70,7 +70,7 @@ export default function Footer() {
           </a>
           {/* Facebook */}
           <a
-            href="https://www.facebook.com/your-page"
+            href="https://www.facebook.com/HeartPrayerMusic"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Facebook"
@@ -87,7 +87,7 @@ export default function Footer() {
           </a>
           {/* Instagram with simple gradient fill */}
           <a
-            href="https://www.instagram.com/your-profile"
+            href="https://www.instagram.com/heart_prayermusic"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Instagram"
@@ -118,6 +118,7 @@ export default function Footer() {
             </svg>
           </a>
           {/* X (formerly Twitter) */}
+          {/* X (formerly Twitter) */}
           <a
             href="https://x.com/yourprofile"
             target="_blank"
@@ -125,18 +126,17 @@ export default function Footer() {
             aria-label="X"
           >
             <svg
-              className="w-8 h-8 text-slate-900 hover:text-sky-500"
-              viewBox="0 0 24 24"
+              className="w-7 h-7 text-slate-900 hover:text-sky-500"
+              viewBox="0 0 1200 1227"
               fill="currentColor"
               aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
             >
-              <path d="M21.447 7.15c.013.18.013.36.013.54 0 5.5-4.19 11.84-11.84 11.84-2.35 0-4.53-.69-6.36-1.88.33.04.66.06 1 .06 1.95 0 3.75-.66 5.18-1.77-1.82-.03-3.36-1.24-3.89-2.9.25.04.5.06.77.06.37 0 .74-.05 1.08-.15-1.9-.38-3.33-2.06-3.33-4.07v-.05c.56.31 1.2.5 1.88.52-1.12-.75-1.86-2.03-1.86-3.48 0-.77.21-1.49.58-2.11 2.06 2.53 5.14 4.19 8.61 4.36-.07-.3-.11-.61-.11-.93 0-2.25 1.82-4.07 4.07-4.07 1.17 0 2.23.49 2.97 1.27.93-.18 1.8-.52 2.59-.99-.31.97-.97 1.78-1.83 2.29.82-.1 1.6-.32 2.33-.64-.54.81-1.22 1.52-2.01 2.09z" />
+              <path d="M714.163 519.284 1160.89 0H1057.2L668.29 452.37 356.06 0H0l468.492 679.38L0 1226.37h103.7l412.96-480.96 331.28 480.96H1200L714.137 519.284h.026ZM565.59 687.47l-46.47-66.46L142.55 88.65h162.06l303.14 433.94 46.47 66.46 395.36 566.72H887.52L565.59 687.47Z" />
             </svg>
           </a>
           {/* Plain blue TikTok icon */}
           <a
-            href="https://www.tiktok.com/@yourprofile"
+            href="https://www.tiktok.com/@hpm_2026"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="TikTok"
