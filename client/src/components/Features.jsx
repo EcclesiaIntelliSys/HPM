@@ -36,26 +36,26 @@ export default function Features({ id }) {
           />
         </div>
         <div className="border-2 border-gray-200 bg-gradient-to-b from-black to-yellow-600 px-4 py-2 shadow rounded-xl font-montserrat text-sm">
-          <div className="flex gap-2 items-center ">
-            <GiCheckMark className="w-5 h-5 text-yellow-400" />
+          <div className="flex gap-2 items-start ">
+            <GiCheckMark className="w-5 h-5 text-yellow-400 flex-shrink-0" />
             <span className="text-white">
               A song gift made from your very thoughts and heart's prayer
             </span>
           </div>
           <div className="flex gap-2 items-center ">
-            <GiCheckMark className="w-5 h-5 text-yellow-400" />
+            <GiCheckMark className="w-5 h-5 text-yellow-400 flex-shrink-0" />
             <span className="text-white">Delivered in 7 days or less</span>
           </div>
           <div className="flex gap-2 items-center">
-            <GiCheckMark className="w-5 h-5 text-yellow-400" />
+            <GiCheckMark className="w-5 h-5 text-yellow-400 flex-shrink-0" />
             <span className="text-white">Recorded in High-fidelity Audio</span>
           </div>
           <div className="flex gap-2 items-center">
-            <GiCheckMark className="w-5 h-5 text-yellow-400" />
+            <GiCheckMark className="w-5 h-5 text-yellow-400 flex-shrink-0" />
             <span className="text-white">30-day Money-Back Guarantee</span>
           </div>
           <div className="flex gap-2 items-center">
-            <GiCheckMark className="w-5 h-5 text-yellow-400" />
+            <GiCheckMark className="w-5 h-5 text-yellow-400 flex-shrink-0" />
             <span className="text-white">
               Prayerfully and artistically crafted
             </span>

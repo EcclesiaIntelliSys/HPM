@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import api from "../api/api";
 import { RxSpeakerLoud, RxSpeakerModerate, RxSpeakerOff } from "react-icons/rx";
+import { BsCloudDownload } from "react-icons/bs";
 
 export default function AudioPlayer() {
   const { publicId } = useParams();
@@ -52,6 +53,12 @@ export default function AudioPlayer() {
     "Cinematic / Epic": "/images/epicsong.png",
   };
   const artwork = genreImages[project?.genre] || "/images/generics.png";
+
+  const handleLoadedMetadata = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setDuration(audio.duration || 0);
+  };
 
   const accent = "rose"; // 🔥 change here (violet, blue, etc.)
 
@@ -358,9 +365,15 @@ export default function AudioPlayer() {
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (!audio) return;
-    setCurrentTime(audio.currentTime);
-    setDuration(audio.duration || 0);
-    setProgress((audio.currentTime / audio.duration) * 100 || 0);
+
+    const current = audio.currentTime;
+    const duration = audio.duration;
+
+    setCurrentTime(current);
+
+    if (duration && !isNaN(duration)) {
+      setProgress((current / duration) * 100);
+    }
   };
 
   const formatTime = (time) => {
@@ -372,6 +385,31 @@ export default function AudioPlayer() {
     return `${mins}:${secs}`;
   };
 
+  const handleDownload = async () => {
+    if (!audioSrc) return;
+
+    try {
+      const response = await fetch(audioSrc, {
+        method: "GET",
+        mode: "cors",
+      });
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = project?.filename || "audio.mp3";
+
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download failed:", err);
+    }
+  };
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-black">
@@ -382,14 +420,14 @@ export default function AudioPlayer() {
 
   return (
     <div
-      className={`h-screen w-screen relative overflow-hidden flex items-center justify-center px-6 transition ${
+      className={`min-h-screen portrait:h-screen w-screen relative flex flex-col landscape:flex-row items-center justify-start landscape:justify-center px-4 py-4 landscape:overflow-y-auto transition ${
         isDark ? "text-white" : "text-zinc-800"
       }`}
     >
       {/* 🌈 Background */}
 
       <div
-        className="absolute inset-0 bg-center bg-cover scale-110 blur-3xl opacity-30"
+        className="absolute inset-0 bg-center bg-cover blur-3xl opacity-30"
         style={{ backgroundImage: `url(${artwork})` }}
       />
       <div
@@ -397,7 +435,7 @@ export default function AudioPlayer() {
       />
 
       {/* 🎧 Main */}
-      <div className="relative z-10 w-full max-w-md flex flex-col items-center mt-10">
+      <div className="relative z-10 w-full max-w-md flex flex-col items-center mt-5">
         <div className="relative flex flex-col items-center z-10">
           {/* 🌟 Logo */}
           <img
@@ -409,7 +447,7 @@ export default function AudioPlayer() {
           <div className=" flex gap-2 rounded-full backdrop-blur bg-white/30 p-1 mb-2">
             <button
               onClick={() => setIsDark(false)}
-              className={`font-monserrat text-xs px-3 py-1 rounded-full transition ${
+              className={`carrois-gothic-sc-regular text-xs px-3 py-1 rounded-full transition ${
                 !isDark
                   ? "bg-rose-500 text-white"
                   : "text-zinc-800 hover:bg-white/20"
@@ -419,7 +457,7 @@ export default function AudioPlayer() {
             </button>
             <button
               onClick={() => setIsDark(true)}
-              className={`text-xs px-3 py-1 rounded-full transition ${
+              className={`carrois-gothic-sc-regular text-xs px-3 py-1 rounded-full transition ${
                 isDark
                   ? "bg-rose-500 text-white"
                   : "text-zinc-800 hover:bg-white/20"
@@ -462,7 +500,7 @@ export default function AudioPlayer() {
 
         {/* 🎵 Info */}
         <div className="w-full max-w-xs overflow-hidden mt-5">
-          <div className="group relative">
+          <div className="group relative flex justify-center">
             <div className="whitespace-nowrap group-hover:animate-marquee font-montserrat text-sm">
               {project?.filename || "Your Song"}
             </div>
@@ -518,42 +556,54 @@ export default function AudioPlayer() {
           </button>
         </div>
 
-        {/* 🔊 Volume */}
-        <div className="mt-8 relative flex items-center group">
-          <button className="text-lg">
-            {audioRef.current?.muted || volume === 0 ? (
-              <RxSpeakerOff />
-            ) : volume < 0.5 ? (
-              <RxSpeakerModerate />
-            ) : (
-              <RxSpeakerLoud />
-            )}
+        {/* 🔊 Volume + Download */}
+        <div className="mt-8 flex items-center gap-4">
+          {/* ⬇️ Download */}
+          <button
+            onClick={handleDownload}
+            className="text-lg hover:scale-110 transition"
+            title="Download"
+          >
+            <BsCloudDownload />
           </button>
-          <div className="absolute left-full ml-2 opacity-0 group-hover:opacity-100 transition">
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={volume}
-              onChange={(e) => {
-                const value = parseFloat(e.target.value);
-                setVolume(value);
-                if (audioRef.current) {
-                  audioRef.current.volume = value;
-                  audioRef.current.muted = value === 0;
-                }
-              }}
-              style={{
-                background: `linear-gradient(to right, ${
-                  isDark ? "white" : "#f43f5e"
-                } ${volume * 100}%, rgba(0,0,0,0.1) ${volume * 100}%)`,
-              }}
-              className="w-24 h-1 appearance-none rounded-lg cursor-pointer"
-            />
+
+          {/* 🔊 Volume (isolated group) */}
+          <div className="relative flex items-center group">
+            <button className="text-lg">
+              {audioRef.current?.muted || volume === 0 ? (
+                <RxSpeakerOff />
+              ) : volume < 0.5 ? (
+                <RxSpeakerModerate />
+              ) : (
+                <RxSpeakerLoud />
+              )}
+            </button>
+
+            <div className="absolute left-full ml-2 opacity-0 group-hover:opacity-100 transition">
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  setVolume(value);
+                  if (audioRef.current) {
+                    audioRef.current.volume = value;
+                    audioRef.current.muted = value === 0;
+                  }
+                }}
+                style={{
+                  background: `linear-gradient(to right, ${
+                    isDark ? "white" : "#f43f5e"
+                  } ${volume * 100}%, rgba(0,0,0,0.1) ${volume * 100}%)`,
+                }}
+                className="w-24 h-1 appearance-none rounded-lg cursor-pointer"
+              />
+            </div>
           </div>
         </div>
-
         {/* ❤️ Footer */}
         <p
           className={`text-xs mt-8 ${isDark ? "text-zinc-400" : "text-zinc-500"}`}
@@ -568,6 +618,7 @@ export default function AudioPlayer() {
           ref={audioRef}
           src={audioSrc}
           crossOrigin="anonymous"
+          onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
           onEnded={() => {
             setIsPlaying(false);

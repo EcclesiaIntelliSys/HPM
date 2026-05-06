@@ -61,15 +61,30 @@ export default function PromoBanner() {
         }
         className="flex flex-col md:flex-row items-center gap-1 md:gap-3 cursor-pointer text-center font-montserrat"
       >
-        <RiHeart2Fill className="w-6 h-6 text-red-800" />
-        <RiHeart2Fill className="w-6 h-6 text-red-800" />
+        {/* ❌ Close Button (absolute so it doesn't break centering) */}
+        <button
+          onClick={handleDismiss}
+          className="absolute right-4 text-olive-700 hover:text-black text-lg font-bold"
+          aria-label="Close banner"
+        >
+          ×
+        </button>
+        <div className="flex">
+          <RiHeart2Fill className="w-6 h-6 text-red-800" />
+          <RiHeart2Fill className="w-6 h-6 text-red-800" />
+        </div>
         <span className="font-semibold italic">
-          MOM's Day is on May 10th.... Gift her now with a Heart Prayer Music
-          for only <span className="line-through opacity-70 text-xl">$100</span>{" "}
-          <span className="text-blue-700 font-bold text-xl">$75</span>{" "}
-          <span className="text-sm">(that's 25% off)</span> !!
+          MOM's Day is on May 10th....
         </span>
-
+        <span className="font-semibold">
+          Gift her now with a Heart Prayer Music for only {"  "}
+          <span className="italic line-through opacity-70 text-xl">$100</span>
+          <span className="italic text-blue-700 font-bold text-xl">
+            {" "}
+            $80
+          </span>{" "}
+        </span>
+        <span className="text-sm">(that's 20% off) !!</span>
         {/* ⏳ Countdown */}
         <span className="text-xs md:text-sm font-mono bg-white/50 px-2 py-1 rounded tracking-tight">
           Promo valid for{" "}
@@ -78,18 +93,11 @@ export default function PromoBanner() {
             {timeLeft.seconds}s
           </span>
         </span>
-        <RiHeart2Fill className="w-6 h-6 text-red-800" />
-        <RiHeart2Fill className="w-6 h-6 text-red-800" />
+        <div className="flex">
+          <RiHeart2Fill className="w-6 h-6 text-red-800" />
+          <RiHeart2Fill className="w-6 h-6 text-red-800" />
+        </div>
       </div>
-
-      {/* ❌ Close Button (absolute so it doesn't break centering) */}
-      <button
-        onClick={handleDismiss}
-        className="absolute right-4 text-olive-700 hover:text-black text-lg font-bold"
-        aria-label="Close banner"
-      >
-        ×
-      </button>
     </div>
   );
 }

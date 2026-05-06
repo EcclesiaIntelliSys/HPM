@@ -407,7 +407,7 @@ export default function WorkflowABC() {
                 onClick={() => navigate("/projectmanage")}
                 className={`${boxClass} ${bit6 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
               >
-                <div className="text-lg font-bold">Projects Management</div>
+                <div className="text-lg font-bold">Projects Monitoring</div>
               </button>
             )}
             {bit5 === "1" && (
@@ -431,7 +431,7 @@ export default function WorkflowABC() {
                 onClick={() => navigate("/vouchermanage")}
                 className={`${boxClass} ${bit6 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
               >
-                <div className="text-lg font-bold">Site Admin</div>
+                <div className="text-lg font-bold">Voucher Management</div>
               </button>
             )}
           </div>
