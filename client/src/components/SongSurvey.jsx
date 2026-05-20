@@ -166,9 +166,17 @@ export default function SongRequestForm() {
 
   const REG_PRICE = config?.songPrice || 0;
   const INTRO_DISC = config?.introDiscount || 0;
-  const voucherDisc =
+
+  // Raw voucher computation
+  const rawVoucherDisc =
     ((matchedVoucher ? matchedVoucher.discount : 0) / 100) * REG_PRICE;
-  const nett = REG_PRICE - INTRO_DISC - voucherDisc;
+
+  // Prevent total from going below zero
+  const maxAllowedVoucherDisc = Math.max(REG_PRICE - INTRO_DISC, 0);
+
+  const voucherDisc = Math.min(rawVoucherDisc, maxAllowedVoucherDisc);
+
+  const nett = Math.max(REG_PRICE - INTRO_DISC - voucherDisc, 0);
 
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
@@ -253,6 +261,33 @@ export default function SongRequestForm() {
         );
       }
 
+      // FREE ORDER → skip checkout entirely
+      if (nett === 0) {
+        try {
+          const freeRes = await fetch(
+            `${API_BASE}/api/projects/${data.id}/mark-free`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            },
+          );
+
+          const freeData = await freeRes.json();
+
+          if (!freeRes.ok) {
+            throw new Error(freeData.error || "Failed to finalize free order");
+          }
+
+          navigate(`/success/${data.id}`);
+          return;
+        } catch (err) {
+          throw new Error(err.message);
+        }
+      }
+
+      // NORMAL PAID FLOW
       setStatus("Redirecting to secure payment...");
       navigate(`/checkout/${data.id}`);
     } catch (err) {

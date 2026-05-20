@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -11,7 +11,7 @@ const stripePromise = process.env.REACT_APP_STRIPE_PUBLIC_KEY
 export default function CheckoutWrapper() {
   const API_BASE = process.env.REACT_APP_API_URL;
   const { projectId } = useParams();
-
+  const navigate = useNavigate();
   const [clientSecret, setClientSecret] = useState(null);
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +54,15 @@ export default function CheckoutWrapper() {
         );
         const intentData = await intentRes.json();
 
-        if (!intentRes.ok) throw new Error(intentData.error);
+        if (!intentRes.ok) {
+          navigate(
+            `/payment-result?projectId=${projectId}&status=failed&message=${encodeURIComponent(
+              intentData.error,
+            )}`,
+          );
+
+          return;
+        }
 
         // NOW fetch project AFTER it was updated
         const projectRes = await fetch(`${API_BASE}/api/projects/${projectId}`);

@@ -5,6 +5,7 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 const Project = require("../models/Project");
 const Voucher = require("../models/Voucher");
+const Config = require("../models/opsconfig");
 
 router.get("/intent/:projectId", async (req, res) => {
   try {
@@ -14,6 +15,12 @@ router.get("/intent/:projectId", async (req, res) => {
     }
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).send("Project not found");
+
+    if (project.paymentStatus === "paid") {
+      return res.status(400).json({
+        error: "This order has already been paid.",
+      });
+    }
 
     // ✅ If already has PaymentIntent → reuse it if still re-usable
     if (project.paymentIntentId) {
@@ -48,8 +55,16 @@ router.get("/intent/:projectId", async (req, res) => {
       await project.save();
     }
     // 💰 Pricing logic
-    const basePrice = 10000; // $100
-    const promoDisc = 1500; // $15
+    const opsConfig = await Config.findOne();
+
+    if (!opsConfig) {
+      return res.status(500).json({
+        error: "Operations configuration not found.",
+      });
+    }
+
+    const basePrice = opsConfig.songPrice * 100;
+    const promoDisc = opsConfig.introDiscount * 100;
 
     let voucherDiscount = 0;
 

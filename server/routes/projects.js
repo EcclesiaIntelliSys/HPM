@@ -3,6 +3,7 @@ const router = express.Router();
 const Project = require("../models/Project");
 const Voucher = require("../models/Voucher");
 const Clockify = require("../models/Clockify");
+const buildPaymentEmail = require("../emails/paymentConfirmation");
 
 const transporter = require("../utils/mailer");
 const LOCK_TIMEOUT = 30 * 60 * 1000; // 30 minutes
@@ -178,6 +179,73 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error("POST /api/projects error", err);
     return res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.post("/:id/mark-free", async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({
+        error: "Project not found",
+      });
+    }
+
+    if (project.paymentStatus === "paid") {
+      return res.status(400).json({
+        error: "Project already paid",
+      });
+    }
+
+    const actor = "SYSTEM";
+    const timestamp = new Date();
+    const message = "Free order confirmed. Queuing for Lyricist Action.";
+
+    project.paymentStatus = "free";
+    project.status = "Queued for Lyricist";
+
+    project.logs.push({
+      timestamp,
+      actor,
+      message,
+    });
+
+    await project.save();
+
+    // voucher claiming
+    if (project.voucherNo) {
+      await Voucher.findOneAndUpdate(
+        { vouchercode: project.voucherNo },
+        {
+          valid: false,
+          claimed: true,
+          claimedby: project.email,
+          claimdate: new Date(),
+        },
+      );
+    }
+
+    // confirmation email
+    await transporter.sendMail({
+      from: process.env.TITAN_FROM,
+      to: project.email,
+      subject: "Your Heart’s Prayer Is Being Crafted Into a Song",
+      html: buildPaymentEmail(project),
+    });
+
+    // realtime artist dashboard refresh
+    await emitLyricistQueue(req);
+
+    res.json({
+      success: true,
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: "Server error",
+    });
   }
 });
 

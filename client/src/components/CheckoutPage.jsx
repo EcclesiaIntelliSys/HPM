@@ -112,6 +112,9 @@ export default function CheckoutPage({ project }) {
 
     const { error } = await stripe.confirmPayment({
       elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/payment-result?projectId=${project._id}`,
+      },
       redirect: "if_required",
     });
 

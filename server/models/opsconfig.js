@@ -15,8 +15,8 @@ const opsconfigSchema = new mongoose.Schema(
     songPrice: Number,
     introDiscount: Number,
   },
-  { timestamps: true },
-  { collection: "opsconfigs" },
+  { timestamps: true, collection: "opsconfigs" },
 );
 
-module.exports = mongoose.model("opsconfig", opsconfigSchema);
+module.exports =
+  mongoose.models.opsconfig || mongoose.model("opsconfig", opsconfigSchema);
