@@ -135,6 +135,14 @@ io.on("connection", (socket) => {
     }
   });
 
+  // join per-project room
+  socket.on("join-project", (projectId) => {
+    if (projectId) {
+      socket.join(projectId);
+      console.log(`Socket ${socket.id} joined project ${projectId}`);
+    }
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);
   });

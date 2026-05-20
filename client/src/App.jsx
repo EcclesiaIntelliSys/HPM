@@ -34,6 +34,7 @@ import OrderTracker from "./components/Tracker";
 import CheckoutWrapper from "./components/CheckoutWrapper";
 import SuccessPage from "./components/SuccessPage";
 import PromoBanner from "./components/PromoBanner";
+import PaymentResultPage from "./components/PaymentResultPage";
 
 import { useNavigate } from "react-router-dom";
 
@@ -206,6 +207,10 @@ export default function App() {
     {
       path: "/checkout/:projectId",
       element: <CheckoutWrapper />,
+    },
+    {
+      path: "/payment-result",
+      element: <PaymentResultPage />,
     },
     {
       path: "/success/:projectId",

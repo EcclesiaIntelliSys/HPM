@@ -6,28 +6,109 @@ import {
 import { useNavigate } from "react-router-dom";
 import React, { useState, useRef, useEffect } from "react";
 import Modal from "./Modal.jsx";
+import { io } from "socket.io-client";
 
 export default function CheckoutPage({ project }) {
   const API_BASE = process.env.REACT_APP_API_URL;
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
+  const socketRef = useRef(null);
+  const paymentCompletedRef = useRef(false);
+  const timeoutRef = useRef(null);
+  const pollingRef = useRef(null);
 
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showFailureModal, setShowFailureModal] = useState(false);
-
   const [paying, setPaying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const cleanupTimers = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+    }
+  };
+
+  const finalizeSuccess = () => {
+    if (paymentCompletedRef.current) return;
+
+    paymentCompletedRef.current = true;
+
+    cleanupTimers();
+
+    setPaying(false);
+
+    navigate(`/payment-result?projectId=${project._id}`);
+  };
+
+  const checkPaymentStatus = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/projects/${project._id}/status`);
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      if (data.status === "paid") {
+        finalizeSuccess();
+      }
+    } catch (err) {
+      console.error("Polling error:", err);
+    }
+  };
+
+  console.log("Submit clicked");
+  console.log("stripe:", stripe);
+  console.log("elements:", elements);
+  console.log("paying:", paying);
   const handlePayment = async (e) => {
     e.preventDefault();
 
-    if (!stripe || !elements || paying) return;
-
+    if (!stripe || !elements || paying) {
+      console.log("BLOCKED:", {
+        stripeExists: !!stripe,
+        elementsExists: !!elements,
+        paying,
+      });
+      return;
+    }
     setPaying(true);
+    paymentCompletedRef.current = false;
+    cleanupTimers();
+    // IMPORTANT FOR PAYMENT ELEMENT
+    const submitResult = await elements.submit();
+
+    if (submitResult.error) {
+      setErrorMessage(submitResult.error.message);
+
+      setPaying(false);
+
+      return;
+    }
+
+    // TIMEOUT NOW WAITS FOR WEBHOOK/SOCKET
+    timeoutRef.current = setTimeout(() => {
+      if (!paymentCompletedRef.current) {
+        navigate(
+          `/payment-result?projectId=${project._id}&status=failed&message=${encodeURIComponent(
+            "Payment confirmation is taking longer than expected.",
+          )}`,
+        );
+        setPaying(false);
+      }
+    }, 20000);
+
+    // FALLBACK POLLING
+    pollingRef.current = setInterval(() => {
+      if (!paymentCompletedRef.current) {
+        checkPaymentStatus();
+      }
+    }, 3000);
 
     const { error } = await stripe.confirmPayment({
       elements,
@@ -35,116 +116,48 @@ export default function CheckoutPage({ project }) {
     });
 
     if (error) {
-      setErrorMessage(error.message);
-      setShowFailureModal(true);
+      cleanupTimers();
+      setPaying(false);
+      navigate(
+        `/payment-result?projectId=${project._id}&status=failed&message=${encodeURIComponent(error.message || "Payment failed")}`,
+      );
+
       return;
     }
-
-    // 👇 THIS is where you call it
-    await checkPaymentStatus();
-
-    setPaying(false);
+    // Webhook + socket/polling are the source of truth
   };
 
-  const checkPaymentStatus = async () => {
-    try {
-      for (let i = 0; i < 5; i++) {
-        const res = await fetch(
-          `${API_BASE}/api/projects/${project._id}/status`,
-        );
+  useEffect(() => {
+    socketRef.current = io(API_BASE);
 
-        if (!res.ok) {
-          throw new Error("Failed to fetch payment status");
-        }
+    // JOIN ROOM IMMEDIATELY
+    socketRef.current.emit("join-project", project._id);
 
-        const data = await res.json();
+    // SOCKET SUCCESS
+    socketRef.current.on("payment-confirmed", (data) => {
+      finalizeSuccess();
+    });
 
-        if (data.status === "paid") {
-          setShowSuccessModal(true);
-          return;
-        }
+    // OPTIONAL DEBUGGING
+    socketRef.current.on("connect", () => {
+      console.log("Socket connected:", socketRef.current.id);
+    });
 
-        await new Promise((r) => setTimeout(r, 1500));
+    socketRef.current.on("disconnect", () => {
+      console.log("Socket disconnected");
+    });
+
+    return () => {
+      cleanupTimers();
+
+      if (socketRef.current) {
+        socketRef.current.disconnect();
       }
-
-      setErrorMessage("Payment not confirmed in time. Please refresh later.");
-      setShowFailureModal(true);
-    } catch (err) {
-      setErrorMessage(err.message || "Unknown error checking payment status");
-      setShowFailureModal(true);
-    } finally {
-      setPaying(false);
-    }
-  };
+    };
+  }, []);
 
   return (
     <div className="relative flex flex-col items-center z-10">
-      {/* Successful Payment Modal */}
-      {showSuccessModal && (
-        <Modal
-          onClose={() => {
-            setShowSuccessModal(false);
-            navigate("/");
-          }}
-          hideDefaultClose={true}
-        >
-          <h2>
-            <strong>Payment Received.</strong>
-          </h2>
-          <br />
-          <p>
-            Your order is confirmed and our creatives team will start work on
-            it. Use Song Code : <strong>{project.songcode}</strong> when
-            tracking the status of your order.
-          </p>
-          <div className="flex justify-center">
-            <button
-              onClick={() => {
-                setShowSuccessModal(false);
-                navigate("/");
-              }}
-              className="bg-green-600 text-white px-4 py-2 rounded mt-4 justify-center"
-            >
-              Close
-            </button>
-          </div>
-        </Modal>
-      )}
-
-      {/* Failed Payment Modal */}
-      {showFailureModal && (
-        <Modal
-          onClose={() => setShowFailureModal(false)}
-          hideDefaultClose={true}
-        >
-          <h2>
-            <strong>Payment Unsuccessful.</strong>
-          </h2>
-          <br /> <p>Error: {errorMessage}</p>
-          <div className="flex gap-4 mt-4 justify-center">
-            <button
-              onClick={() => {
-                setPaying(false);
-                setShowFailureModal(false);
-              }}
-              // onClick={handleSubmitProject}
-              className="bg-purple-600 text-white px-4 py-2 rounded"
-            >
-              Retry
-            </button>
-            <button
-              onClick={() => {
-                setShowFailureModal(false);
-                navigate("/");
-              }}
-              className="bg-red-600 text-white px-4 py-2 rounded"
-            >
-              Discard
-            </button>
-          </div>
-        </Modal>
-      )}
-
       {/* 🌟 Logo */}
       <img
         src="/images/mylogo5.png"
@@ -291,7 +304,7 @@ export default function CheckoutPage({ project }) {
               disabled={!stripe || paying}
               className="mt-4 w-8/12 mx-auto block bg-green-600 hover:bg-green-800 text-white py-2 rounded-full shadow-md"
             >
-              {paying ? "Processing..." : "Pay Now"}
+              {paying ? "Finalizing Payment..." : "Pay Now"}
             </button>
           </form>
         </div>

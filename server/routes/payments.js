@@ -15,17 +15,38 @@ router.get("/intent/:projectId", async (req, res) => {
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).send("Project not found");
 
-    // ✅ If already has PaymentIntent → reuse it
+    // ✅ If already has PaymentIntent → reuse it if still re-usable
     if (project.paymentIntentId) {
       const existingIntent = await stripe.paymentIntents.retrieve(
         project.paymentIntentId,
       );
 
-      return res.json({
-        clientSecret: existingIntent.client_secret,
-      });
-    }
+      console.log(
+        "Existing PaymentIntent:",
+        existingIntent.id,
+        existingIntent.status,
+      );
 
+      const reusableStatuses = [
+        "requires_payment_method",
+        "requires_confirmation",
+        "requires_action",
+      ];
+
+      // ✅ Reuse only if still payable
+      if (reusableStatuses.includes(existingIntent.status)) {
+        return res.json({
+          clientSecret: existingIntent.client_secret,
+        });
+      }
+
+      // ❌ Otherwise clear stale intent
+      console.log("PaymentIntent not reusable. Creating new intent...");
+
+      project.paymentIntentId = null;
+
+      await project.save();
+    }
     // 💰 Pricing logic
     const basePrice = 10000; // $100
     const promoDisc = 1500; // $15
