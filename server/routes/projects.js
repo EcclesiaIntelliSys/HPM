@@ -239,6 +239,7 @@ router.post("/:id/mark-free", async (req, res) => {
 
     res.json({
       success: true,
+      songcode: project.songcode,
     });
   } catch (err) {
     console.error(err);

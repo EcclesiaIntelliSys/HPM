@@ -213,7 +213,7 @@ export default function App() {
       element: <PaymentResultPage />,
     },
     {
-      path: "/success/:projectId",
+      path: "/success/:songcode",
       element: <SuccessPage />,
     },
   ]);

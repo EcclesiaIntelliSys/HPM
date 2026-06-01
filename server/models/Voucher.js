@@ -13,6 +13,16 @@ const VoucherSchema = new mongoose.Schema(
         message: "Discount must be an integer value",
       },
     },
+    quantity: {
+      type: Number,
+      required: true,
+      min: [1, "Quantity must be at least 0"],
+      max: [1000, "Quantity cannot exceed 1000"],
+      validate: {
+        validator: Number.isInteger,
+        message: "Quantity must be an integer value",
+      },
+    },
     validstart: { type: Date, required: true },
     validend: { type: Date, required: true },
     valid: { type: Boolean, required: true },

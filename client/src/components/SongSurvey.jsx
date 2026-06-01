@@ -275,12 +275,12 @@ export default function SongRequestForm() {
           );
 
           const freeData = await freeRes.json();
-
+          console.log(freeData);
           if (!freeRes.ok) {
             throw new Error(freeData.error || "Failed to finalize free order");
           }
 
-          navigate(`/success/${data.id}`);
+          navigate(`/success/${data.songcode}`);
           return;
         } catch (err) {
           throw new Error(err.message);

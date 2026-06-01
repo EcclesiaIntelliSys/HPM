@@ -83,7 +83,7 @@ const ProjectSchema = new mongoose.Schema(
     paymentIntentId: { type: String },
     paymentStatus: {
       type: String,
-      enum: ["pending", "paid", "failed"],
+      enum: ["pending", "paid", "failed", "free"],
       default: "pending",
     },
     amount: { type: Number }, // store in cents

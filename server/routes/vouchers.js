@@ -13,7 +13,13 @@ router.post("/", async (req, res) => {
         .status(400)
         .json({ error: "Discount must be between 0 and 100" });
     }
-
+    const { quantity } = req.body;
+    // Pre-validation check if (quantity < 1 || discount > 1000)
+    if (quantity < 1 || quantity > 1000) {
+      return res
+        .status(400)
+        .json({ error: "Quantity must be between 1 and 1000" });
+    }
     const voucher = await Voucher.create(req.body);
     res.status(201).json(voucher);
   } catch (err) {
@@ -52,6 +58,15 @@ router.put("/:id", async (req, res) => {
         .status(400)
         .json({ error: "Discount must be between 0 and 100" });
     }
+
+    const { quantity } = req.body;
+    // Pre-validation check if (quantity < 1 || discount > 1000)
+    if (quantity < 1 || quantity > 1000) {
+      return res
+        .status(400)
+        .json({ error: "Quantity must be between 1 and 1000" });
+    }
+
     const voucher = await Voucher.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,

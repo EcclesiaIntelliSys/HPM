@@ -24,6 +24,7 @@ export default function VoucherCRUD() {
   const [form, setForm] = useState({
     vouchercode: "",
     discount: 0,
+    quantity: 1,
     validstart: "",
     validend: "",
     valid: true,
@@ -87,6 +88,7 @@ export default function VoucherCRUD() {
       setForm({
         vouchercode: "",
         discount: 0,
+        quantity: 1,
         validstart: "",
         validend: "",
         valid: true,
@@ -106,6 +108,7 @@ export default function VoucherCRUD() {
     setForm({
       vouchercode: voucher.vouchercode,
       discount: voucher.discount,
+      quantity: voucher.quantity,
       validstart: voucher.validstart?.slice(0, 10),
       validend: voucher.validend?.slice(0, 10),
       valid: voucher.valid,
@@ -285,19 +288,39 @@ export default function VoucherCRUD() {
                 className="border p-2 flex-1 rounded"
               />
             </div>
+
+            {/* Role */}
+            <div className="flex items-center gap-1">
+              <label className="w-32 font-semibold text-right">
+                Role (for onboarding voucher only):
+              </label>
+              <input
+                type="text"
+                value={form.role}
+                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                className="border p-2 flex-1 rounded"
+              />
+
+              {/* Quantity */}
+              <div className="flex items-center gap-1">
+                <label className="w-32 font-semibold text-right">
+                  Quantity :
+                </label>
+                <input
+                  type="number"
+                  value={form.quantity}
+                  onChange={(e) =>
+                    setForm({ ...form, quantity: Number(e.target.value) })
+                  }
+                  className="border p-2 flex-1 rounded"
+                  min="1"
+                  max="1000"
+                  required
+                />
+              </div>
+            </div>
           </div>
-          {/* Role */}
-          <div className="flex items-center gap-1">
-            <label className="w-32 font-semibold text-right">
-              Role (for onboarding voucher only):
-            </label>
-            <input
-              type="text"
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="border p-2 flex-1 rounded"
-            />
-          </div>
+          <br />
           <button
             type="submit"
             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full md:w-auto mt-2"
@@ -320,6 +343,7 @@ export default function VoucherCRUD() {
               <tr className="bg-gray-100">
                 <th className="border p-2">Code</th>
                 <th className="border p-2">Discount</th>
+                <th className="border p-2">Quantity</th>
                 <th className="border p-2">Valid Start</th>
                 <th className="border p-2">Valid End</th>
                 <th className="border p-2">Valid</th>
@@ -335,6 +359,7 @@ export default function VoucherCRUD() {
                 <tr key={v._id}>
                   <td className="border p-2">{v.vouchercode}</td>
                   <td className="border p-2">{v.discount}</td>
+                  <td className="border p-2">{v.quantity}</td>
                   <td className="border p-2">
                     {new Date(v.validstart).toLocaleDateString()}
                   </td>
