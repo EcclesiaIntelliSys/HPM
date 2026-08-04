@@ -44,7 +44,9 @@ export default function Features({ id }) {
           </div>
           <div className="flex gap-2 items-center ">
             <GiCheckMark className="w-5 h-5 text-yellow-400 flex-shrink-0" />
-            <span className="text-white">Delivered in 7 days or less</span>
+            <span className="text-white">
+              Delivered in 5 days.. Or as fast as 24 hours or less!
+            </span>
           </div>
           <div className="flex gap-2 items-center">
             <GiCheckMark className="w-5 h-5 text-yellow-400 flex-shrink-0" />

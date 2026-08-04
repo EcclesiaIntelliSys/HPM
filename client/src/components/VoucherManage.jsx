@@ -24,11 +24,11 @@ export default function VoucherCRUD() {
   const [form, setForm] = useState({
     vouchercode: "",
     discount: 0,
-    quantity: 1,
+    quantity: 0,
     validstart: "",
     validend: "",
     valid: true,
-    claimed: false,
+
     claimedby: "",
     claimdate: "",
     role: "",
@@ -88,11 +88,11 @@ export default function VoucherCRUD() {
       setForm({
         vouchercode: "",
         discount: 0,
-        quantity: 1,
+        quantity: 0,
         validstart: "",
         validend: "",
         valid: true,
-        claimed: false,
+
         claimedby: "",
         claimdate: "",
         role: "",
@@ -112,7 +112,7 @@ export default function VoucherCRUD() {
       validstart: voucher.validstart?.slice(0, 10),
       validend: voucher.validend?.slice(0, 10),
       valid: voucher.valid,
-      claimed: voucher.claimed,
+
       claimedby: voucher.claimedby || "",
       claimdate: voucher.claimdate ? voucher.claimdate.slice(0, 10) : "",
       role: voucher.role || "",
@@ -247,18 +247,6 @@ export default function VoucherCRUD() {
               />
             </div>
 
-            {/* Claimed Checkbox */}
-            <div className="flex items-center gap-1">
-              <label className="w-32 font-semibold text-right">Claimed:</label>
-              <input
-                type="checkbox"
-                checked={form.claimed}
-                onChange={(e) =>
-                  setForm({ ...form, claimed: e.target.checked })
-                }
-              />
-            </div>
-
             {/* Claimed By */}
             <div className="flex items-center gap-1">
               <label className="w-32 font-semibold text-right">
@@ -313,7 +301,7 @@ export default function VoucherCRUD() {
                     setForm({ ...form, quantity: Number(e.target.value) })
                   }
                   className="border p-2 flex-1 rounded"
-                  min="1"
+                  min="0"
                   max="1000"
                   required
                 />
@@ -347,7 +335,7 @@ export default function VoucherCRUD() {
                 <th className="border p-2">Valid Start</th>
                 <th className="border p-2">Valid End</th>
                 <th className="border p-2">Valid</th>
-                <th className="border p-2">Claimed</th>
+
                 <th className="border p-2">Claimed By</th>
                 <th className="border p-2">Claim Date</th>
                 <th className="border p-2">Role</th>
@@ -367,7 +355,7 @@ export default function VoucherCRUD() {
                     {new Date(v.validend).toLocaleDateString()}
                   </td>
                   <td className="border p-2">{v.valid ? "Yes" : "No"}</td>
-                  <td className="border p-2">{v.claimed ? "Yes" : "No"}</td>
+
                   <td className="border p-2">{v.claimedby}</td>
                   <td className="border p-2">
                     {v.claimdate

@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import React, { useState, useRef, useEffect } from "react";
 import Modal from "./Modal.jsx";
 import { io } from "socket.io-client";
+import { calculateOrder } from "../utils/orderCalculator";
 
 export default function CheckoutPage({ project }) {
   const API_BASE = process.env.REACT_APP_API_URL;
@@ -23,6 +24,10 @@ export default function CheckoutPage({ project }) {
 
   const [paying, setPaying] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [config, setConfig] = useState(null);
+  const { addonsTotal, deliveryDays } = calculateOrder(project, config);
+  const deliveryDate = new Date();
+  deliveryDate.setDate(deliveryDate.getDate() + deliveryDays);
 
   const cleanupTimers = () => {
     if (timeoutRef.current) {
@@ -159,6 +164,13 @@ export default function CheckoutPage({ project }) {
     };
   }, []);
 
+  useEffect(() => {
+    fetch(`${API_BASE}/api/opsconfig/client-config`)
+      .then((res) => res.json())
+      .then((cfg) => setConfig(cfg))
+      .catch(console.error);
+  }, []);
+
   return (
     <div className="relative flex flex-col items-center z-10">
       {/* 🌟 Logo */}
@@ -169,10 +181,10 @@ export default function CheckoutPage({ project }) {
         className="w-28 sm:w-32 md:w-36 lg:w-40 object-contain mb-1 sm:mb-2 mt-4"
       />
 
-      <div className="w-full md:w-8/12 lg:w-6/12 mx-auto p-4 grid md:grid-cols-2 font-montserrat gap-4 bg-olive-100">
+      <div className="w-full md:w-8/12 lg:w-6/12 mx-auto p-4 grid md:grid-cols-2 font-montserrat gap-4 bg-blue-800">
         {/* ORDER SUMMARY */}
         <div>
-          <div className="w-full shadow-md p-6 bg-sand-300 radius-md shadow-xl border-gray-300 border-2">
+          <div className="w-full shadow-md p-6 bg-white radius-md shadow-xl border-gray-300 border-2">
             <div className="text-xl font-bold mb-4">Order Summary</div>
 
             <br />
@@ -180,10 +192,9 @@ export default function CheckoutPage({ project }) {
             {/* DELIVERY DATE */}
             <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2 pb-2">
               <span>Delivery Date:</span>
+
               <span className="text-blue-900 text-xl font-black">
-                {new Date(
-                  new Date().setDate(new Date().getDate() + 7),
-                ).toLocaleDateString("en-US", {
+                {deliveryDate.toLocaleDateString("en-US", {
                   weekday: "short",
                   year: "numeric",
                   month: "short",
@@ -207,7 +218,7 @@ export default function CheckoutPage({ project }) {
             {/* INTRO DISCOUNT */}
             {project.promoDisc > 0 && (
               <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2 pb-2">
-                <span>Less: Promotional Discount:</span>
+                <span>Less Promotional Discount:</span>
                 <span className="text-red-900 font-black">
                   (${(project.promoDisc / 100).toFixed(2)})
                 </span>
@@ -217,13 +228,24 @@ export default function CheckoutPage({ project }) {
             {/* VOUCHER DISCOUNT (optional) */}
             {project.voucherNo && project.voucherDiscount > 0 && (
               <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2 pb-2">
-                <span>Less: Voucher Discount:</span>
+                <span>Less Voucher Discount:</span>
                 <span className="text-red-900 font-black">
                   (${(project.voucherDiscount / 100).toFixed(2)})
                 </span>
               </div>
             )}
 
+            {addonsTotal > 0 && (
+              <>
+                <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2 pb-2">
+                  <span>Special Add-ons:</span>
+
+                  <span className="text-blue-900 font-black">
+                    +${addonsTotal.toFixed(2)}
+                  </span>
+                </div>
+              </>
+            )}
             <br />
 
             {/* NET TOTAL */}
@@ -241,10 +263,10 @@ export default function CheckoutPage({ project }) {
               <strong>Important Note:</strong>
             </p>
             <p className="pt-1">
-              Your custom song will be delivered via an audio player link sent
-              to the email address you provided in the questionnaire. Delivery
-              will be completed on or before the date indicated above, or within
-              seven (7) days from payment confirmation—whichever comes later.
+              Your custom song will be delivered thru an audio player link sent
+              to the email address you provided in the questionnaire. Target
+              delivery date shown above is indicative. Final target delivery
+              date will be based on the date of successful payment.
             </p>
             <p className="pt-1">
               Upon successful payment, you will receive an Order Confirmation
@@ -296,7 +318,7 @@ export default function CheckoutPage({ project }) {
         </div>
 
         {/* PAYMENT */}
-        <div className="shadow-md p-6 border bg-sand-300">
+        <div className="shadow-md p-6 border bg-white">
           <h2 className="text-xl font-bold mb-4">Payment</h2>
 
           <form className="carrois-gothic-sc-regular" onSubmit={handlePayment}>

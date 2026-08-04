@@ -38,6 +38,7 @@ const ProjectSchema = new mongoose.Schema(
     createdAt: { type: Date, default: Date.now },
     targetdate: { type: Date },
     deliverydate: { type: Date },
+    deliveryDays: { type: Number },
     status: { type: String, default: "Awaiting Payment" },
     logs: {
       type: [LogSchema],
@@ -91,6 +92,24 @@ const ProjectSchema = new mongoose.Schema(
     voucherDiscount: { type: Number }, // store in cents
     basePrice: { type: Number }, // store in cents
     currency: { type: String, default: "usd" },
+    addons: {
+      fastTrack: {
+        type: Boolean,
+        default: false,
+      },
+      nextDay: {
+        type: Boolean,
+        default: false,
+      },
+      lyricVideo: {
+        type: Boolean,
+        default: false,
+      },
+      commercialRights: {
+        type: Boolean,
+        default: false,
+      },
+    },
   },
 
   { collection: "projects" },

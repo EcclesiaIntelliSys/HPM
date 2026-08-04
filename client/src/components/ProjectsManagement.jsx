@@ -74,6 +74,16 @@ export default function ProjectsManagement() {
     return `${mm}${dd}${yy}-${hh}${min}${ss}`;
   };
 
+  const formatDateTimeLocal = (date) => {
+    if (!date) return "";
+
+    const d = new Date(date);
+    const offset = d.getTimezoneOffset();
+
+    const local = new Date(d.getTime() - offset * 60000);
+    return local.toISOString().slice(0, 16);
+  };
+
   // Save edits
   const handleSave = async () => {
     try {
@@ -103,7 +113,8 @@ export default function ProjectsManagement() {
     (p) =>
       p.email.toLowerCase().includes(search.toLowerCase()) ||
       p.songcode.toLowerCase().includes(search.toLowerCase()) ||
-      p.recipient.toLowerCase().includes(search.toLowerCase()),
+      p.recipient.toLowerCase().includes(search.toLowerCase()) ||
+      p.status.toLowerCase().includes(search.toLowerCase()),
   );
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -126,6 +137,9 @@ export default function ProjectsManagement() {
     specialmsg: "Special Message",
     targetdate: "Target Date",
     deliverydate: "Delivery Date",
+    paymentStatus: "Payment Status",
+    amount: "Amount(USD)",
+    addons: "Add-On Options",
   };
 
   // Field groups
@@ -134,10 +148,50 @@ export default function ProjectsManagement() {
     ["genre", "voice", "email"], // row 2
     ["ack", "status", "voucherNo"], // row 3
     ["createdAt", "targetdate", "deliverydate"], // row 4
+    ["paymentStatus", "amount", "addons"], // row 4
     ["qualities"], // row 5 (single row)
     ["moment"], // row 6 (single row)
     ["specialmsg"], // row 7 (single row)
   ];
+
+  const formatAddons = (addons) => {
+    if (!addons) return "None";
+
+    const addonLabels = {
+      fastTrack: "Fast Track",
+      nextDay: "Next Day Delivery",
+      lyricVideo: "Lyrics Video",
+      commercialRights: "Commercial Rights",
+    };
+
+    return (
+      Object.entries(addons)
+        .filter(([_, enabled]) => enabled)
+        .map(([key]) => addonLabels[key])
+        .join(", ") || "None"
+    );
+  };
+
+  const formatValue = (key, value) => {
+    switch (key) {
+      case "createdAt":
+      case "targetdate":
+      case "deliverydate":
+        return new Date(value).toLocaleString();
+
+      case "amount":
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(value / 100);
+
+      case "addons":
+        return formatAddons(value);
+
+      default:
+        return String(value ?? "");
+    }
+  };
 
   return (
     <main>
@@ -193,23 +247,74 @@ export default function ProjectsManagement() {
                         <label className="text-sm font-medium">
                           {LABELS[key] || key}
                         </label>
-                        <input
-                          type="text"
-                          value={
-                            key === "createdAt"
-                              ? new Date(form.createdAt).toLocaleString()
-                              : (form[key] ?? "")
-                          }
-                          onChange={(e) =>
-                            setForm({ ...form, [key]: e.target.value })
-                          }
-                          className={`border p-2 rounded ${
-                            ["createdAt", "songcode"].includes(key)
-                              ? "bg-gray-100"
-                              : ""
-                          }`}
-                          readOnly={["createdAt", "songcode"].includes(key)}
-                        />
+
+                        {["targetdate", "deliverydate"].includes(key) ? (
+                          <input
+                            type="datetime-local"
+                            value={formatDateTimeLocal(form[key])}
+                            onChange={(e) =>
+                              setForm({ ...form, [key]: e.target.value })
+                            }
+                            className="border p-2 rounded"
+                          />
+                        ) : key === "addons" ? (
+                          <div className="space-y-2 border p-2 rounded">
+                            {[
+                              ["fastTrack", "Fast Track"],
+                              ["nextDay", "Next Day Delivery"],
+                              ["lyricVideo", "Lyrics Video"],
+                              ["commercialRights", "Commercial Rights"],
+                            ].map(([addonKey, label]) => (
+                              <label
+                                key={addonKey}
+                                className="flex items-center gap-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={form.addons?.[addonKey] || false}
+                                  onChange={(e) =>
+                                    setForm({
+                                      ...form,
+                                      addons: {
+                                        ...form.addons,
+                                        [addonKey]: e.target.checked,
+                                      },
+                                    })
+                                  }
+                                />
+                                {label}
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            value={
+                              key === "createdAt"
+                                ? new Date(form.createdAt).toLocaleString()
+                                : key === "amount"
+                                  ? (form.amount / 100).toFixed(2)
+                                  : (form[key] ?? "")
+                            }
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                [key]:
+                                  key === "amount"
+                                    ? Math.round(
+                                        parseFloat(e.target.value || 0) * 100,
+                                      )
+                                    : e.target.value,
+                              })
+                            }
+                            className={`border p-2 rounded ${
+                              ["createdAt", "songcode"].includes(key)
+                                ? "bg-gray-100"
+                                : ""
+                            }`}
+                            readOnly={["createdAt", "songcode"].includes(key)}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -234,9 +339,7 @@ export default function ProjectsManagement() {
                           {LABELS[key] || key}:{" "}
                         </span>
                         <span className="font-sanserif font-bold roboto-condensed-forms text-blue-900">
-                          {key === "createdAt"
-                            ? new Date(selected.createdAt).toLocaleString()
-                            : String(selected[key])}
+                          {formatValue(key, selected[key])}
                         </span>
                       </div>
                     ))}
@@ -257,7 +360,7 @@ export default function ProjectsManagement() {
         </button>
         <input
           type="text"
-          placeholder="Search by email, songcode, or recipient..."
+          placeholder="Search by email, songcode, recipient, or status..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);

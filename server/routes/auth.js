@@ -131,7 +131,7 @@ router.post("/register", upload.single("profilePicture"), async (req, res) => {
       const voucher = await Voucher.findOne({
         vouchercode: voucherCode,
         valid: true,
-        claimed: false,
+
         validstart: { $lte: now },
         validend: { $gte: now },
       });
@@ -140,7 +140,6 @@ router.post("/register", upload.single("profilePicture"), async (req, res) => {
           .status(400)
           .json({ error: "Invalid or expired voucher code" });
       }
-      voucher.claimed = true;
       voucher.valid = false;
       voucher.claimedby = email;
       voucher.claimdate = now;

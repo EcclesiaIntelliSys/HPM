@@ -34,6 +34,7 @@ export default function WorkflowABC() {
 
   //States for Admin4
   const [pendingAdminQueueCount, setPendingAdminQueueCount] = useState(0);
+  const [pendingTestimonialCount, setPendingTestimonialCount] = useState(0);
 
   const [showSpinner, setShowSpinner] = useState(false);
   const navigate = useNavigate();
@@ -91,16 +92,22 @@ export default function WorkflowABC() {
       setClockifyPaidQueueCount(data.countClockifyPaid);
     };
 
+    const handlePendingTestimonial = (data) => {
+      setPendingTestimonialCount(data.count);
+    };
+
     socket.on("lyricistQueueUpdated", handleLyricistQueue);
     socket.on("saQueueUpdated", handleSAQueue);
     socket.on("qaQueueUpdated", handleQAQueue);
     socket.on("pendingQueueUpdated", handlePendingQueue);
+    socket.on("pendingTestimonialUpdated", handlePendingTestimonial);
 
     return () => {
       socket.off("lyricistQueueUpdated", handleLyricistQueue);
       socket.off("saQueueUpdated", handleSAQueue);
       socket.off("qaQueueUpdated", handleQAQueue);
       socket.off("pendingQueueUpdated", handlePendingQueue);
+      socket.off("pendingTestimonialUpdated", handlePendingTestimonial);
     };
   }, [socket]);
 
@@ -262,6 +269,7 @@ export default function WorkflowABC() {
         setPendingAdminQueueCount(res.data.countAdmin);
         setClockifyQueueCount(res.data.countClockify);
         setClockifyPaidQueueCount(res.data.countClockifyPaid);
+        setPendingTestimonialCount(res.data.countPendingTestimonial);
       } catch (err) {
         console.error("Error fetching queue count:", err);
       }
@@ -432,6 +440,18 @@ export default function WorkflowABC() {
                 className={`${boxClass} ${bit6 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
               >
                 <div className="text-lg font-bold">Voucher Management</div>
+              </button>
+            )}
+            {bit4 === "1" && (
+              <button
+                onClick={() => navigate("/testimonialsmanage")}
+                className={`${boxClass} ${bit4 !== "1" ? "bg-gray-300 text-gray-400 cursor-not-allowed hover:bg-gray-300" : ""}`}
+                // disabled={pendingTestimonialCount === 0}
+              >
+                <div className="text-lg font-bold ">Feedback Review</div>
+                <div className="text-sm">
+                  {pendingTestimonialCount} testimonials pending review
+                </div>
               </button>
             )}
           </div>

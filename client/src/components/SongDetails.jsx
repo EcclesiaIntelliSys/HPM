@@ -94,8 +94,15 @@ export default function SongDetails() {
 
     const claimProject = async () => {
       try {
-        const res = await api.get(`${API_BASE}/api/projectsmanage/${id}`);
+        // Stamp current admin
+        const res = await api.post(
+          `${API_BASE}/api/projectsmanage/${id}/adminclaim`,
+          {
+            username: user.username,
+          },
+        );
 
+        // Use the updated project returned by the claim route
         setProject(res.data);
 
         setOverrides((prev) => ({

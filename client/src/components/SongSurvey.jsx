@@ -3,10 +3,12 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   FaRegArrowAltCircleLeft,
   FaRegArrowAltCircleRight,
+  FaCheck,
 } from "react-icons/fa";
 import { MdOutlineShoppingCartCheckout } from "react-icons/md";
 import { GiCheckMark } from "react-icons/gi";
 import Modal from "./Modal.jsx";
+import { calculateOrder } from "../utils/orderCalculator";
 
 const API_BASE = process.env.REACT_APP_API_URL || "";
 
@@ -91,6 +93,47 @@ const VOICE_EXPLANATIONS = {
     "Let our composer pick the best fit for your song.",
 };
 
+function AddonCard({ icon, title, description, price, checked, onClick }) {
+  return (
+    <div
+      onClick={onClick}
+      className={`h-full cursor-pointer rounded-xl border-2 p-4
+              transition-all duration-200
+              flex flex-col justify-between
+              ${
+                checked
+                  ? "border-green-600 bg-green-50 shadow-lg scale-[1.02]"
+                  : "border-gray-300 hover:border-green-500 hover:shadow"
+              }`}
+    >
+      <div
+        className="min-h-[100px]
+flex flex-col justify-between"
+      >
+        <div>
+          <h4 className="font-semibold">
+            {icon} {title}
+          </h4>
+
+          <p className="text-xs text-gray-800 delius-regular">{description}</p>
+
+          <p className="mt-2 font-bold text-green-700">+${price}</p>
+        </div>
+
+        <div
+          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition
+            ${
+              checked
+                ? "bg-green-600 border-green-600 text-white"
+                : "border-gray-400"
+            }`}
+        >
+          {checked && "✓"}
+        </div>
+      </div>
+    </div>
+  );
+}
 export default function SongRequestForm() {
   // if (submitting) return;
   // setSubmitting(true);
@@ -117,6 +160,12 @@ export default function SongRequestForm() {
     email: "",
     ack: false,
     voucherNo: "",
+    addons: {
+      fastTrack: false,
+      nextDay: false,
+      lyricVideo: false,
+      commercialRights: false,
+    },
   });
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -148,21 +197,56 @@ export default function SongRequestForm() {
 
   const matchedVoucher =
     Array.isArray(vouchers) &&
-    vouchers.find(
-      (v) =>
-        v.vouchercode === form.voucherNo &&
-        v.valid === true &&
-        v.claimed === false,
-    );
+    vouchers.find((v) => v.vouchercode === form.voucherNo && v.valid === true);
+
+  const emailAlreadyClaimed =
+    matchedVoucher &&
+    form.email &&
+    matchedVoucher.claimedby
+      ?.toUpperCase()
+      .split(";")
+      .map((email) => email.trim())
+      .includes(form.email.toUpperCase().trim());
+
+  let voucherWithinDateRange = false;
+
+  if (matchedVoucher) {
+    const now = new Date();
+
+    const startDate = new Date(matchedVoucher.validstart);
+    startDate.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(matchedVoucher.validend);
+    endDate.setHours(23, 59, 59, 999);
+
+    voucherWithinDateRange = now >= startDate && now <= endDate;
+  }
 
   let voucherError = "";
+
   if (form.voucherNo) {
     if (!matchedVoucher || matchedVoucher.valid === false) {
       voucherError = "Invalid voucher code";
-    } else if (matchedVoucher.claimed === true) {
-      voucherError = "Voucher already claimed";
+    } else if (!voucherWithinDateRange) {
+      voucherError =
+        "Voucher is not currently valid. Please check the promotion period.";
+    } else if (emailAlreadyClaimed) {
+      voucherError = "You have already claimed this voucher previously.";
     }
   }
+
+  const SelectionIndicator = ({ selected }) => (
+    <div
+      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 flex-shrink-0
+      ${
+        selected
+          ? "bg-green-600 border-green-600 text-white"
+          : "border-gray-400 bg-white"
+      }`}
+    >
+      {selected && <FaCheck className="w-3 h-3" />}
+    </div>
+  );
 
   const REG_PRICE = config?.songPrice || 0;
   const INTRO_DISC = config?.introDiscount || 0;
@@ -176,8 +260,14 @@ export default function SongRequestForm() {
 
   const voucherDisc = Math.min(rawVoucherDisc, maxAllowedVoucherDisc);
 
-  const nett = Math.max(REG_PRICE - INTRO_DISC - voucherDisc, 0);
+  const baseNett = Math.max(REG_PRICE - INTRO_DISC - voucherDisc, 0);
 
+  const { addonsTotal, deliveryDays } = calculateOrder(form, config);
+
+  const nett = baseNett + addonsTotal;
+
+  const deliveryDate = new Date();
+  deliveryDate.setDate(deliveryDate.getDate() + deliveryDays);
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
 
@@ -240,6 +330,7 @@ export default function SongRequestForm() {
     const payload = {
       ...form,
       relation: form.relation === "Other" ? form.otherRelation : form.relation,
+      deliveryDays,
     };
     delete payload.otherRelation; // remove helper field
     // console.log("Payload for Postman:\n", JSON.stringify(payload, null, 2));
@@ -262,7 +353,7 @@ export default function SongRequestForm() {
       }
 
       // FREE ORDER → skip checkout entirely
-      if (nett === 0) {
+      if (nett < 1.0) {
         try {
           const freeRes = await fetch(
             `${API_BASE}/api/projects/${data.id}/mark-free`,
@@ -328,16 +419,80 @@ export default function SongRequestForm() {
   const rafId = useRef(null);
   const emailRef = useRef(null);
 
+  const toggleAddon = (addon) => {
+    setForm((prev) => {
+      const addons = { ...prev.addons };
+
+      if (addon === "fastTrack") {
+        addons.fastTrack = !addons.fastTrack;
+
+        // Mutually exclusive
+        if (addons.fastTrack) {
+          addons.nextDay = false;
+        }
+      } else if (addon === "nextDay") {
+        addons.nextDay = !addons.nextDay;
+
+        // Mutually exclusive
+        if (addons.nextDay) {
+          addons.fastTrack = false;
+        }
+      } else {
+        // Independent add-ons
+        addons[addon] = !addons[addon];
+      }
+
+      return {
+        ...prev,
+        addons,
+      };
+    });
+  };
+
   //Load operational config values from DB
   useEffect(() => {
     fetch(`${API_BASE}/api/opsconfig/client-config`)
       .then((res) => res.json())
       .then((cfg) => {
+        console.log("Client Config:", cfg);
         setConfig(cfg);
         setConfigLoaded(true);
       })
       .catch(() => setConfigLoaded(true));
   }, []);
+
+  const ADDONS = [
+    {
+      key: "fastTrack",
+      icon: "⚡",
+      title: "Fast-Track My Song",
+      description: `Your personalized song delivered in just 3 days.`,
+      price: config?.fastTrackPrice ?? 0,
+    },
+    {
+      key: "nextDay",
+      icon: "🚀",
+      title: "Next-Day Drop",
+      description: `Receive your completed custom song within 24 hours or less.`,
+      price: config?.nextDayPrice ?? 0,
+    },
+    {
+      key: "lyricVideo",
+      icon: "🎬",
+      title: "HD Lyric Video",
+      description:
+        "Give us one extra day, and we'll deliver your custom song with a beautiful lyric video—perfect for a Sing-Along bonding session.",
+      price: config?.lyricVideoPrice ?? 0,
+    },
+    {
+      key: "commercialRights",
+      icon: "💼",
+      title: "Commercial Rights",
+      description:
+        "Obtain the rights to use your custom song for commercial purposes, including business, marketing, promotional, and monetized content.",
+      price: config?.commercialRightsPrice ?? 0,
+    },
+  ];
 
   useEffect(() => {
     if (form.relation === "Other") {
@@ -840,7 +995,7 @@ export default function SongRequestForm() {
         // {/* CHECKOUT */}
         <div className="overflow-hidden">
           <h2 className="roboto-condensed-forms text-2xl text-center">
-            Lets Pack Your Gift For{" "}
+            Let's Pack Your Gift For{" "}
             <span className="font-bold mogra-regular text-3xl">
               {form.recipient}!
             </span>
@@ -906,9 +1061,27 @@ export default function SongRequestForm() {
                 </span>
               </div>
 
-              <br></br>
-              <br></br>
+              {/* Optional Add-Ons */}
+              <div className="mt-4 roboto-condensed-forms">
+                <h3 className="text-lg font-bold text-red-800 mb-1">
+                  Optional Add-Ons
+                </h3>
+                <p className="text-sm italic text-gray-600 mb-2">
+                  Make Your Gift Extra Special!
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch">
+                  {ADDONS.map((addon) => (
+                    <AddonCard
+                      key={addon.key}
+                      {...addon}
+                      checked={form.addons[addon.key]}
+                      onClick={() => toggleAddon(addon.key)}
+                    />
+                  ))}
+                </div>{" "}
+              </div>
             </div>
+            <br />
             <div className="flex flex-col md:flex-row gap-6 ">
               <div className="w-full md:w-2/4 shadow-md p-4 bg-sand-300 radius-md shadow-xl border-gray-300 border-2">
                 <div className="font-mono text-xl font-black">
@@ -916,11 +1089,9 @@ export default function SongRequestForm() {
                 </div>
                 <br></br>
                 <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
-                  <span>Delivery Date:</span>
+                  <span>*Delivery Date:</span>
                   <span className="justify-end text-blue-900 text-xl font-black">
-                    {new Date(
-                      new Date().setDate(new Date().getDate() + 7),
-                    ).toLocaleDateString("en-US", {
+                    {deliveryDate.toLocaleDateString("en-US", {
                       weekday: "short",
                       year: "numeric",
                       month: "short",
@@ -928,7 +1099,6 @@ export default function SongRequestForm() {
                     })}
                   </span>
                 </div>
-
                 <br></br>
                 <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
                   <span>Heart's Prayer in a Song:</span>
@@ -945,10 +1115,7 @@ export default function SongRequestForm() {
                 </div>
                 {form.voucherNo &&
                   vouchers.find(
-                    (v) =>
-                      v.vouchercode === form.voucherNo &&
-                      v.valid === true &&
-                      v.claimed === false,
+                    (v) => v.vouchercode === form.voucherNo && v.valid === true,
                   ) && (
                     <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
                       {" "}
@@ -958,22 +1125,66 @@ export default function SongRequestForm() {
                       </span>{" "}
                     </div>
                   )}
-                <br></br>
-                <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
+                <br />
+                {addonsTotal > 0 && (
+                  <>
+                    <div className="font-black flex carrois-gothic-sc-regular text-lg ">
+                      Special Add-ons:
+                    </div>
+                  </>
+                )}
+                {form.addons.fastTrack && (
+                  <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
+                    <span>Fast-Track My Song</span>
+                    <span className="justify-end text-blue-900 font-black">
+                      +${config?.fastTrackPrice ?? 0}
+                    </span>
+                  </div>
+                )}
+                {form.addons.nextDay && (
+                  <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
+                    <span>Next-Day Drop</span>
+                    <span className="justify-end text-blue-900 font-black">
+                      +${config?.nextDayPrice ?? 0}
+                    </span>
+                  </div>
+                )}
+                {form.addons.lyricVideo && (
+                  <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
+                    <span>HD Lyric Video</span>
+                    <span className="justify-end text-blue-900 font-black">
+                      +${config?.lyricVideoPrice ?? 0}
+                    </span>
+                  </div>
+                )}
+                {form.addons.commercialRights && (
+                  <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2">
+                    <span>Commercial Rights</span>
+                    <span className="justify-end text-blue-900 font-black">
+                      +${config?.commercialRightsPrice ?? 0}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex carrois-gothic-sc-regular text-md justify-between items-end border-blue-100 border-b-2 mb-2">
                   <span className="font-black text-xl font-mono">NETT:</span>
                   <span className="justify-end text-blue-900 text-2xl font-black">
                     ${nett} USD
                   </span>
                 </div>
+                <span className="font-mono text-xs tracking-tight italic">
+                  * Target delivery date is indicative. Final target delivery
+                  date will be based on the date of successful payment.
+                </span>
               </div>
 
-              <div className="w-full md:w-2/4 font-montserrat text-md space-y-0">
+              <div className="w-full md:w-2/4 font-montserrat text-xs space-y-0">
                 {/* Existing feature list */}
                 <div className="border-2 border-gray-200 bg-gradient-to-b from-black to-yellow-700 px-4 py-2 shadow rounded-xl mb-4">
                   <div className="flex gap-2 items-center ">
                     <GiCheckMark className="w-5 h-5 text-yellow-400" />
                     <span className="text-white">
-                      Custom Song delivered in 7 days
+                      Custom Song delivered in {deliveryDays} day(s)
                     </span>
                   </div>
                   <div className="flex gap-2 items-center">

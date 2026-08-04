@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import Modal from "./Modal.jsx";
+import { useNavigate } from "react-router-dom";
 
 export default function Footer() {
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <footer className="mt-8 bg-olive-50 border-t border-sand-200 font-montserrat">
@@ -29,6 +31,13 @@ export default function Footer() {
             {" "}
             Privacy Policy{" "}
           </button>
+          <button
+            onClick={() => navigate("/reviews")}
+            className="text-sand-700 text-xs hover:underline"
+          >
+            {" "}
+            Testimonials{" "}
+          </button>
           {showTerms && (
             <Modal
               title=""
@@ -51,7 +60,7 @@ export default function Footer() {
             aria-label="YouTube"
           >
             <svg
-              className="w-9 h-9 text-red-600 hover:text-red-700"
+              className="w-11 h-11 text-red-600 hover:text-red-700"
               viewBox="0 0 24 24"
               fill="none"
               aria-hidden="true"
@@ -76,7 +85,7 @@ export default function Footer() {
             aria-label="Facebook"
           >
             <svg
-              className="w-8 h-8 text-blue-600 hover:text-blue-700"
+              className="w-9 h-9 text-blue-600 hover:text-blue-700"
               viewBox="0 0 24 24"
               fill="currentColor"
               aria-hidden="true"
@@ -126,7 +135,7 @@ export default function Footer() {
             aria-label="X"
           >
             <svg
-              className="w-7 h-7 text-slate-900 hover:text-sky-500"
+              className="w-6 h-6 text-slate-900 hover:text-sky-500"
               viewBox="0 0 1200 1227"
               fill="currentColor"
               aria-hidden="true"
@@ -142,7 +151,7 @@ export default function Footer() {
             aria-label="TikTok"
           >
             <svg
-              className="w-7 h-7 text-blue-600 hover:text-blue-700"
+              className="w-6 h-6 text-blue-600 hover:text-blue-700"
               viewBox="0 0 24 24"
               fill="currentColor"
               xmlns="http://www.w3.org/2000/svg"

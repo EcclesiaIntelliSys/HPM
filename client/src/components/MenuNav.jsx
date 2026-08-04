@@ -51,6 +51,14 @@ export default function MenuNav() {
             Track Order
           </button>
         </li>
+        <li>
+          <button
+            onClick={() => navigate("/reviews")}
+            className="text-olive-900 hover:text-olive-700 hover:bg-terra-100"
+          >
+            Testimonials
+          </button>
+        </li>
       </ul>
     </nav>
   );

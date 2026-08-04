@@ -66,6 +66,15 @@ router.get("/intent/:projectId", async (req, res) => {
     const basePrice = opsConfig.songPrice * 100;
     const promoDisc = opsConfig.introDiscount * 100;
 
+    // Add-on pricing (in cents)
+    const addonsPrice =
+      (project.addons?.fastTrack ? opsConfig.fastTrackPrice * 100 : 0) +
+      (project.addons?.nextDay ? opsConfig.nextDayPrice * 100 : 0) +
+      (project.addons?.lyricVideo ? opsConfig.lyricVideoPrice * 100 : 0) +
+      (project.addons?.commercialRights
+        ? opsConfig.commercialRightsPrice * 100
+        : 0);
+
     let voucherDiscount = 0;
 
     if (project.voucherNo) {
@@ -82,7 +91,7 @@ router.get("/intent/:projectId", async (req, res) => {
       }
     }
 
-    const finalAmount = basePrice - promoDisc - voucherDiscount;
+    const finalAmount = basePrice + addonsPrice - promoDisc - voucherDiscount;
 
     const amount = Math.round(finalAmount);
 
@@ -102,6 +111,7 @@ router.get("/intent/:projectId", async (req, res) => {
     project.promoDisc = promoDisc;
     project.basePrice = basePrice;
     project.paymentStatus = "pending";
+    project.addonsPrice = addonsPrice;
 
     await project.save();
 

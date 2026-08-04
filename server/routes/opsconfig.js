@@ -18,6 +18,13 @@ router.get("/client-config", async (req, res) => {
     qaClaimMin: config.qaClaimMin,
     songPrice: config.songPrice,
     introDiscount: config.introDiscount,
+    fastTrackPrice: config.fastTrackPrice,
+    fastTrackDays: config.fastTrackDays,
+    nextDayPrice: config.nextDayPrice,
+    nextDayDays: config.nextDayDays,
+    lyricVideoPrice: config.lyricVideoPrice,
+    lyricVideoDays: config.lyricVideoDays,
+    commercialRightsPrice: config.commercialRightsPrice,
   });
 });
 

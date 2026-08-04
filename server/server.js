@@ -33,6 +33,7 @@ const vouchersRoutes = require("./routes/vouchers");
 const projectsRoutes = require("./routes/projects");
 const clockifyRoutes = require("./routes/clockify");
 const opsconfigRoutes = require("./routes/opsconfig");
+const testimonialRoutes = require("./routes/testimonials");
 const { cleanupOrphan } = require("./utils/cleanupOrphan");
 const {
   emitLyricistQueue,
@@ -78,6 +79,7 @@ app.use("/api/clockify", auth, clockifyRoutes);
 app.use("/api/vouchers", vouchersRoutes);
 app.use("/api/projects", projectsRoutes);
 app.use("/api/opsconfig", opsconfigRoutes);
+app.use("/api/testimonials", testimonialRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

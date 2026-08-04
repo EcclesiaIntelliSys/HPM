@@ -16,7 +16,7 @@ const VoucherSchema = new mongoose.Schema(
     quantity: {
       type: Number,
       required: true,
-      min: [1, "Quantity must be at least 0"],
+      min: [0, "Quantity must be at least 0"],
       max: [1000, "Quantity cannot exceed 1000"],
       validate: {
         validator: Number.isInteger,
@@ -26,7 +26,6 @@ const VoucherSchema = new mongoose.Schema(
     validstart: { type: Date, required: true },
     validend: { type: Date, required: true },
     valid: { type: Boolean, required: true },
-    claimed: { type: Boolean },
     claimedby: { type: String },
     claimdate: { type: Date },
     role: {

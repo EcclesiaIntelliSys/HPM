@@ -1,5 +1,6 @@
 const Project = require("../models/Project");
 const Clockify = require("../models/Clockify");
+const Testimonial = require("../models/Testimonial");
 
 const emitLyricistQueue = async (io) => {
   try {
@@ -60,7 +61,10 @@ const emitPendingQueue = async (io) => {
             status: / - WIP$/i,
           }),
           Project.countDocuments({
-            status: "Queued for Admin Review and Action",
+            $or: [
+              { status: "Queued for Admin Review and Action" },
+              { status: "Admin Review in Progress" },
+            ],
           }),
           Clockify.countDocuments({
             resource: username,
@@ -83,9 +87,22 @@ const emitPendingQueue = async (io) => {
   }
 };
 
+const emitPendingTestimonial = async (io) => {
+  try {
+    const count = await Testimonial.countDocuments({
+      status: "pending",
+    });
+
+    io.emit("pendingTestimonialUpdated", { count });
+  } catch (err) {
+    console.error("emitPendingTestimonial error:", err.message);
+  }
+};
+
 module.exports = {
   emitLyricistQueue,
   emitSAQueue,
   emitQAQueue,
   emitPendingQueue,
+  emitPendingTestimonial,
 };

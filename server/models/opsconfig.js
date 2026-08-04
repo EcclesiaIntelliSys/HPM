@@ -14,6 +14,13 @@ const opsconfigSchema = new mongoose.Schema(
     qaClaimMin: Number,
     songPrice: Number,
     introDiscount: Number,
+    fastTrackPrice: Number,
+    fastTrackDays: Number,
+    nextDayPrice: Number,
+    nextDayDays: Number,
+    lyricVideoPrice: Number,
+    lyricVideoDays: Number,
+    commercialRightsPrice: Number,
   },
   { timestamps: true, collection: "opsconfigs" },
 );

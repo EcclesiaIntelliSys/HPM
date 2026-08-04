@@ -35,7 +35,11 @@ import CheckoutWrapper from "./components/CheckoutWrapper";
 import SuccessPage from "./components/SuccessPage";
 import PromoBanner from "./components/PromoBanner";
 import PaymentResultPage from "./components/PaymentResultPage";
-
+import TestimonialForm from "./components/TestimonialForm";
+import TestimonialsManage from "./components/TestimonialsManage";
+import Reviews from "./components/Reviews";
+import VideoPlayer from "./components/VideoPlayer";
+import ImageViewer from "./components/ImageViewer";
 import { useNavigate } from "react-router-dom";
 
 import { loadStripe } from "@stripe/stripe-js";
@@ -45,29 +49,6 @@ const stripePromise = process.env.REACT_APP_STRIPE_PUBLIC_KEY
   : null;
 
 export default function App() {
-  // const [project, setProject] = useState(null);
-
-  // Wrappers stay as normal components that use useNavigate internally
-  // function SongSurveyWrapper() {
-  //   const navigate = useNavigate();
-  //   return (
-  //     <SongSurvey
-  //       onNext={(data) => {
-  //         setProject(data);
-  //         navigate(`/payment/${project._id}`);
-  //       }}
-  //     />
-  //   );
-  // }
-
-  // function PaymentWrapper() {
-  //   return (
-  //     <Elements stripe={stripePromise}>
-  //       <CheckoutPage project={project} />
-  //     </Elements>
-  //   );
-  // }
-
   function ArtistSignOnWrapper() {
     const navigate = useNavigate();
     return (
@@ -125,6 +106,18 @@ export default function App() {
       ),
     },
     {
+      path: "/reviews",
+      element: <Reviews />,
+    },
+    {
+      path: "/video-player",
+      element: <VideoPlayer />,
+    },
+    {
+      path: "/image-viewer",
+      element: <ImageViewer />,
+    },
+    {
       path: "/vouchermanage",
       element: (
         <ProtectedRoute>
@@ -137,6 +130,14 @@ export default function App() {
       element: (
         <ProtectedRoute>
           <ProjectManage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/testimonialsmanage",
+      element: (
+        <ProtectedRoute>
+          <TestimonialsManage />
         </ProtectedRoute>
       ),
     },
@@ -215,6 +216,10 @@ export default function App() {
     {
       path: "/success/:songcode",
       element: <SuccessPage />,
+    },
+    {
+      path: "/testimonial",
+      element: <TestimonialForm />,
     },
   ]);
 

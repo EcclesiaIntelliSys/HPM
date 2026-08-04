@@ -4,6 +4,7 @@ require("dotenv").config({ path: __dirname + "/../.env" });
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const User = require("../models/User");
+const opsconfig = require("../models/opsconfig");
 
 async function run() {
   if (!process.env.MONGO_URI) {
@@ -34,7 +35,30 @@ async function run() {
     role: "111111",
   });
 
-  await user.save();
+  const dummy = new opsconfig({
+    accessTokenAge: "10m",
+    refreshTokenAge: "7d",
+    projectMinLimit: 3,
+    heartBeatMin: 2,
+    lyricistWorkMin: 15,
+    saWorkMin: 20,
+    qaWorkMin: 12,
+    lyricistClaimMin: 3,
+    songartistClaimMin: 3,
+    qaClaimMin: 3,
+    songPrice: 100,
+    introDiscount: 20,
+    fastTrackPrice: 10,
+    fastTrackDays: 3,
+    nextDayPrice: 30,
+    nextDayDays: 1,
+    lyricVideoPrice: 40,
+    lyricVideoDays: 2,
+    commercialRightsPrice: 50,
+  });
+
+  // await user.save();
+  await dummy.save();
   console.log("Demo user created:");
   console.log("  email:", demoEmail);
   console.log("  password:", demoPassword);

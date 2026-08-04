@@ -13,6 +13,7 @@ const upload = require("../middleware/audioUpload");
 const convertToMp3 = require("../utils/convertToMp3");
 const r2 = require("../utils/r2");
 const { PutObjectCommand } = require("@aws-sdk/client-s3");
+const Testimonial = require("../models/Testimonial");
 
 // simple email validator
 const isValidEmail = (email) => /\S+@\S+\.\S+/.test(email);
@@ -112,6 +113,8 @@ router.post("/", async (req, res) => {
       email,
       ack,
       voucherNo,
+      addons,
+      deliveryDays,
     } = req.body;
 
     // Validate presence
@@ -155,7 +158,9 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Invalid email format" });
     }
 
-    const targetdate = new Date(new Date().setDate(new Date().getDate() + 7));
+    const targetdate = new Date(
+      new Date().setDate(new Date().getDate() + deliveryDays),
+    );
     const project = new Project({
       relation,
       recipient,
@@ -168,7 +173,9 @@ router.post("/", async (req, res) => {
       email,
       ack,
       voucherNo,
+      addons,
       targetdate,
+      deliveryDays,
     });
 
     await project.save();
@@ -215,15 +222,25 @@ router.post("/:id/mark-free", async (req, res) => {
 
     // voucher claiming
     if (project.voucherNo) {
-      await Voucher.findOneAndUpdate(
-        { vouchercode: project.voucherNo },
-        {
-          valid: false,
-          claimed: true,
-          claimedby: project.email,
-          claimdate: new Date(),
-        },
-      );
+      const voucher = await Voucher.findOne({
+        vouchercode: project.voucherNo,
+      });
+
+      if (voucher) {
+        voucher.claimedby = voucher.claimedby
+          ? `${voucher.claimedby}; ${project.email.toUpperCase()}`
+          : project.email.toUpperCase();
+
+        voucher.quantity -= 1;
+        voucher.claimdate = new Date();
+
+        if (voucher.quantity <= 0) {
+          voucher.quantity = 0;
+          voucher.valid = false;
+        }
+
+        await voucher.save();
+      }
     }
 
     // confirmation email
@@ -268,7 +285,13 @@ router.get("/", async (req, res) => {
 
     let filter = {};
 
-    if (status && !status_contains) filter.status = status;
+    if (status && !status_contains) {
+      if (Array.isArray(status)) {
+        filter.status = { $in: status };
+      } else {
+        filter.status = status;
+      }
+    }
 
     if (status_contains) {
       filter.status = { $regex: status_contains, $options: "i" };
@@ -328,22 +351,39 @@ router.get("/countPendingByuser", async (req, res) => {
       };
     }
 
-    const [count, countAdmin, countClockify, countClockifyPaid] =
-      await Promise.all([
-        Project.countDocuments(query),
-        Project.countDocuments({
-          status: "Queued for Admin Review and Action",
-        }),
-        Clockify.countDocuments({
-          resource: lockUser,
-        }),
-        Clockify.countDocuments({
-          resource: lockUser,
-          payflag: true,
-        }),
-      ]);
+    const [
+      count,
+      countAdmin,
+      countClockify,
+      countClockifyPaid,
+      countPendingTestimonial,
+    ] = await Promise.all([
+      Project.countDocuments(query),
+      Project.countDocuments({
+        $or: [
+          { status: "Queued for Admin Review and Action" },
+          { status: "Admin Review in Progress" },
+        ],
+      }),
+      Clockify.countDocuments({
+        resource: lockUser,
+      }),
+      Clockify.countDocuments({
+        resource: lockUser,
+        payflag: true,
+      }),
+      Testimonial.countDocuments({
+        status: "pending",
+      }),
+    ]);
 
-    res.json({ count, countAdmin, countClockify, countClockifyPaid });
+    res.json({
+      count,
+      countAdmin,
+      countClockify,
+      countClockifyPaid,
+      countPendingTestimonial,
+    });
   } catch (err) {
     console.error("Count error:", err);
     res.status(500).json({ error: "Server error" });
@@ -450,6 +490,7 @@ router.put("/:id", async (req, res) => {
     if (assessor !== undefined) updates.assessor = assessor;
     if (assessor_end !== undefined) updates.assessor_end = assessor_end;
     if (status !== undefined) updates.status = status;
+    if (status === "Project Completed") updates.deliverydate = new Date();
 
     const project = await Project.findByIdAndUpdate(
       id,
@@ -847,6 +888,23 @@ router.post("/:id/qaclaim", async (req, res) => {
 });
 
 // END - QUALITY ASSURANCE ROUTES
+
+// Route for Admin Reviewer Claiming the Project
+
+router.post("/:id/adminclaim", async (req, res) => {
+  const { id } = req.params;
+  const { username } = req.body;
+
+  const project = await Project.findByIdAndUpdate(
+    id,
+    {
+      admin: username,
+      status: "Admin Review in Progress",
+    },
+    { new: true },
+  );
+  res.json(project);
+});
 
 //Add a log entry to a project
 router.post("/:id/logs", async (req, res) => {

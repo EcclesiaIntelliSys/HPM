@@ -48,6 +48,8 @@ module.exports = async (req, res) => {
       const actor = "SYSTEM";
       const timestamp = new Date();
       const message = "Payment Confirmed. Queuing for Lyricist Action.";
+      const targetdate = new Date();
+      targetdate.setDate(targetdate.getDate() + project.deliveryDays);
 
       const updatedProject = await Project.findOneAndUpdate(
         {
@@ -57,6 +59,7 @@ module.exports = async (req, res) => {
         {
           paymentStatus: "paid",
           status: "Queued for Lyricist",
+          targetdate,
           $push: {
             logs: { timestamp, actor, message },
           },
@@ -103,17 +106,26 @@ module.exports = async (req, res) => {
 
       if (project.voucherNo) {
         try {
-          await Voucher.findOneAndUpdate(
-            { vouchercode: project.voucherNo },
-            {
-              valid: false,
-              claimed: true,
-              claimedby: project.email,
-              claimdate: new Date(),
-            },
-          );
+          const voucher = await Voucher.findOne({
+            vouchercode: project.voucherNo,
+          });
 
-          console.log("Voucher claimed");
+          if (voucher) {
+            voucher.claimedby = voucher.claimedby
+              ? `${voucher.claimedby} ${project.email.toUpperCase()}`
+              : project.email.toUpperCase();
+
+            voucher.quantity -= 1;
+            voucher.claimdate = new Date();
+
+            if (voucher.quantity <= 0) {
+              voucher.quantity = 0;
+              voucher.valid = false;
+            }
+
+            await voucher.save();
+            console.log("Voucher claimed");
+          }
         } catch (err) {
           console.error("Voucher claim failed:", err);
         }

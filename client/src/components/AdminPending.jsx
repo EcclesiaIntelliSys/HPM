@@ -33,7 +33,10 @@ export default function AdminPending() {
     try {
       const res = await api.get(`${API_BASE}/api/projectsmanage`, {
         params: {
-          status: "Queued for Admin Review and Action",
+          status: [
+            "Queued for Admin Review and Action",
+            "Admin Review in Progress",
+          ],
         },
       });
       setProjects(res.data);
@@ -84,15 +87,19 @@ export default function AdminPending() {
   };
 
   // Filter + paginate
+  const searchTerm = search.toLowerCase();
+
   const filtered = projects.filter(
     (p) =>
-      p.email.toLowerCase().includes(search.toLowerCase()) ||
-      p.assessor.toLowerCase().includes(search.toLowerCase()) ||
-      p.songcode.toLowerCase().includes(search.toLowerCase()) ||
-      p.dispo.toLowerCase().includes(search.toLowerCase()) ||
+      (p.email || "").toLowerCase().includes(searchTerm) ||
+      (p.status || "").toLowerCase().includes(searchTerm) ||
+      (p.admin || "").toLowerCase().includes(searchTerm) ||
+      (p.assessor || "").toLowerCase().includes(searchTerm) ||
+      (p.songcode || "").toLowerCase().includes(searchTerm) ||
+      (p.dispo || "").toLowerCase().includes(searchTerm) ||
       (p.songtitlerev?.trim() || p.songtitle || "")
         .toLowerCase()
-        .includes(search.toLowerCase()),
+        .includes(searchTerm),
   );
   const totalPages = Math.ceil(filtered.length / pageSize);
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -160,26 +167,43 @@ export default function AdminPending() {
                   <th className="p-2 border">Songcode</th>
                   <th className="p-2 border">Song Title</th>
                   <th className="p-2 border">Email</th>
+                  <th className="p-2 border">Status</th>
+                  <th className="p-2 border">Admin Reviewer</th>
+                  <th className="p-2 border">Target Date</th>
                   <th className="p-2 border">QA Assessor</th>
                   <th className="p-2 border">QA Date</th>
-                  <th className="p-2 border">Disposition</th>
+                  <th className="p-2 border">QA Dispo</th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.map((p) => {
                   const url = `/songdetails/${p._id}`;
+                  const canOpen =
+                    !p.admin || p.admin === "" || p.admin === user?.username;
 
                   return (
                     <tr
                       key={p._id}
-                      className={`cursor-pointer hover:bg-blue-900 hover:text-white`}
-                      onClick={() => navigate(url)}
+                      className={
+                        canOpen
+                          ? "cursor-pointer hover:bg-blue-900 hover:text-white"
+                          : "opacity-50"
+                      }
+                      onClick={() => {
+                        if (canOpen) navigate(url);
+                      }}
                     >
                       <td className="p-2 border">{p.songcode}</td>
                       <td className="p-2 border">
                         {p.songtitlerev || p.songtitle}
                       </td>
                       <td className="p-2 border">{p.email}</td>
+                      <td className="p-2 border">{p.status}</td>
+                      <td className="p-2 border">{p.admin}</td>
+
+                      <td className="p-2 border">
+                        {new Date(p.targetdate).toLocaleDateString()}
+                      </td>
                       <td className="p-2 border">{p.assessor}</td>
                       <td className="p-2 border">
                         {new Date(p.assessor_end).toLocaleDateString()}
